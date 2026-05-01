@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: team-hub-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: hub
+      POSTGRES_PASSWORD: hub
+      POSTGRES_DB: team_hub
+    ports:
+      - "5433:5432"
+    volumes:
+      - team_hub_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hub -d team_hub"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  team_hub_pgdata:

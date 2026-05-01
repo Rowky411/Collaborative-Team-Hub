@@ -1,0 +1,13 @@
+{
+  "name": "@team-hub/config",
+  "version": "0.0.1",
+  "private": true,
+  "main": "index.js",
+  "files": [
+    "eslint-base.cjs",
+    "eslint-next.cjs",
+    "eslint-node.cjs",
+    "tailwind-preset.cjs",
+    "prettier.cjs"
+  ]
+}

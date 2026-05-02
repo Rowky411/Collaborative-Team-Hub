@@ -11,6 +11,7 @@ import goalRoutes from './routes/goal.routes.js';
 import actionItemRoutes from './routes/actionItem.routes.js';
 import announcementRoutes from './routes/announcement.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
+import analyticsRoutes from './routes/analytics.routes.js';
 
 export function createApp() {
   const app = express();
@@ -40,6 +41,7 @@ export function createApp() {
   app.use('/api/workspaces/:workspaceId/action-items', actionItemRoutes);
   app.use('/api/workspaces/:workspaceId/announcements', announcementRoutes);
   app.use('/api/notifications', notificationRoutes);
+  app.use('/api/workspaces/:workspaceId/analytics', analyticsRoutes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

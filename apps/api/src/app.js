@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import { env } from './lib/env.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import authRoutes from './routes/auth.routes.js';
+import workspaceRoutes from './routes/workspace.routes.js';
 
 export function createApp() {
   const app = express();
@@ -30,6 +31,7 @@ export function createApp() {
   );
 
   app.use('/api/auth', authRoutes);
+  app.use('/api/workspaces', workspaceRoutes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

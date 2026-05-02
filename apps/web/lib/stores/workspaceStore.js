@@ -112,6 +112,14 @@ export const useWorkspaceStore = create((set, get) => ({
     }));
   },
 
+  addWorkspace(workspace) {
+    set((state) => ({
+      workspaces: state.workspaces.find((w) => w.id === workspace.id)
+        ? state.workspaces
+        : [...state.workspaces, workspace],
+    }));
+  },
+
   applyWorkspaceUpdated(updated) {
     set((state) => ({
       currentWorkspace: state.currentWorkspace

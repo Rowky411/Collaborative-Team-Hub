@@ -6,7 +6,7 @@ import { useCallback } from "react";
 
 const STATUSES = ["TODO", "IN_PROGRESS", "IN_REVIEW", "DONE"];
 
-export function KanbanBoard({ items, onDragEnd, onCardClick }) {
+export function KanbanBoard({ items, onDragEnd, onCardView, onCardEdit }) {
   const grouped = useCallback(() => {
     const map = Object.fromEntries(STATUSES.map((s) => [s, []]));
     [...items]
@@ -25,7 +25,8 @@ export function KanbanBoard({ items, onDragEnd, onCardClick }) {
             key={status}
             status={status}
             items={grouped[status]}
-            onCardClick={onCardClick}
+            onCardView={onCardView}
+            onCardEdit={onCardEdit}
           />
         ))}
       </div>

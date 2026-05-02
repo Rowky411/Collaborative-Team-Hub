@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useForm } from "react-hook-form";
 import { useWorkspaceStore } from "../../../../lib/stores/workspaceStore";
 import { usePresenceStore } from "../../../../lib/stores/presenceStore";
 import { useGoalStore } from "../../../../lib/stores/goalStore";
@@ -9,6 +10,9 @@ import { useAnnouncementStore } from "../../../../lib/stores/announcementStore";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Avatar, ProgressRing, ProgressBar, OnlineDot, StatusBadge, Badge } from "../../../../components/ui/flux";
+import { Modal } from "../../../../components/Modal";
+import { FormField, TextInput, PrimaryButton } from "../../../../components/ui/FormField";
+import { apiError } from "../../../../lib/apiClient";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -21,34 +25,6 @@ function timeAgo(iso) {
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
-}
-
-const DAYS = ["M", "T", "W", "T", "F", "S", "S"];
-
-// Simple mock weekly progress bars (heights based on goal completion spread)
-function GoalProgressChart({ goals }) {
-  // Build a fake 7-day distribution from goal statuses
-  const heights = [40, 55, 35, 70, 60, 20, 10];
-  return (
-    <div className="flex items-end justify-between gap-1" style={{ height: 48 }}>
-      {DAYS.map((d, i) => (
-        <div key={i} className="flex flex-col items-center gap-1" style={{ flex: 1 }}>
-          <div
-            style={{
-              width: "100%",
-              height: heights[i],
-              background: i === 3
-                ? "var(--accent, #7c5cfc)"
-                : "color-mix(in srgb, var(--accent, #7c5cfc) 25%, transparent)",
-              borderRadius: 3,
-              transition: "height 0.4s",
-            }}
-          />
-          <span style={{ fontSize: 9, color: "var(--muted)", fontWeight: 600 }}>{d}</span>
-        </div>
-      ))}
-    </div>
-  );
 }
 
 // ─── Stat card ────────────────────────────────────────────────────────────────
@@ -84,6 +60,7 @@ export default function WorkspaceOverviewPage() {
   const { workspaceId } = useParams();
   const workspace = useWorkspaceStore((s) => s.currentWorkspace);
   const members = useWorkspaceStore((s) => s.members);
+  const inviteMember = useWorkspaceStore((s) => s.inviteMember);
   const onlineUserIds = usePresenceStore((s) => s.onlineUserIds);
   const goals = useGoalStore((s) => s.goals);
   const fetchGoals = useGoalStore((s) => s.fetchGoals);
@@ -357,18 +334,82 @@ export default function WorkspaceOverviewPage() {
             </div>
           )}
 
-          {/* GOAL PROGRESS mini chart */}
-          {goals.length > 0 && (
-            <div style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14, padding: "14px 16px" }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--muted)", letterSpacing: "0.09em", textTransform: "uppercase", marginBottom: 12 }}>
-                Goal Progress
-              </div>
-              <GoalProgressChart goals={goals} />
-            </div>
-          )}
-
         </div>
       </div>
+
+      <InviteModal
+        open={showInvite}
+        onClose={() => setShowInvite(false)}
+        onInvite={(payload) => inviteMember(workspaceId, payload)}
+      />
     </div>
+  );
+}
+
+function InviteModal({ open, onClose, onInvite }) {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm({ defaultValues: { email: "", role: "MEMBER" } });
+  const [serverError, setServerError] = useState(null);
+
+  const close = () => {
+    reset();
+    setServerError(null);
+    onClose();
+  };
+
+  const onSubmit = async (values) => {
+    setServerError(null);
+    try {
+      await onInvite(values);
+      reset();
+      onClose();
+    } catch (err) {
+      setServerError(apiError(err));
+    }
+  };
+
+  return (
+    <Modal open={open} onClose={close} title="Invite member">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+        <FormField label="Email" error={errors.email?.message}>
+          <TextInput
+            register={register}
+            name="email"
+            type="email"
+            {...register("email", {
+              required: "Email is required",
+              pattern: { value: /.+@.+\..+/, message: "Invalid email" },
+            })}
+            placeholder="teammate@example.com"
+          />
+        </FormField>
+        <FormField label="Role">
+          <select
+            {...register("role")}
+            className="rounded-md border border-[color:var(--border)] bg-transparent px-3 py-2 text-sm"
+          >
+            <option value="MEMBER">Member</option>
+            <option value="ADMIN">Admin</option>
+          </select>
+        </FormField>
+        {serverError ? <p className="text-sm text-red-600">{serverError}</p> : null}
+        <div className="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={close}
+            className="rounded-md px-3 py-2 text-sm hover:bg-[color:var(--border)]/30"
+          >
+            Cancel
+          </button>
+          <PrimaryButton type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Inviting…" : "Send invite"}
+          </PrimaryButton>
+        </div>
+      </form>
+    </Modal>
   );
 }

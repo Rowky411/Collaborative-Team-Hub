@@ -27,6 +27,32 @@ export const upload = multer({
   },
 });
 
+export const uploadAny = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+});
+
+export async function storeFile(file, folder = 'team-hub/attachments') {
+  if (useCloudinary) {
+    return new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { folder, resource_type: 'auto', use_filename: true, unique_filename: true },
+        (err, result) => {
+          if (err) reject(err);
+          else resolve(result.secure_url);
+        },
+      );
+      stream.end(file.buffer);
+    });
+  }
+  const ext = (file.originalname.split('.').pop() || 'bin').replace(/[^a-z0-9]/gi, '');
+  const hash = crypto.randomBytes(6).toString('hex');
+  const filename = `${hash}.${ext}`;
+  const fullPath = path.join(UPLOAD_DIR, filename);
+  await fs.promises.writeFile(fullPath, file.buffer);
+  return `http://localhost:${env.PORT}/uploads/${filename}`;
+}
+
 export async function storeAvatar(file, userId) {
   if (useCloudinary) {
     return new Promise((resolve, reject) => {

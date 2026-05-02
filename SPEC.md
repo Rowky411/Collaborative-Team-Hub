@@ -1709,9 +1709,7 @@ Options 1 (collaborative editing) and 3 (offline support) require significant ad
 | 8.5 | Run seed on production | Demo data visible |
 | 8.6 | Smoke test all features on production URLs | All core features confirmed working |
 | 8.7 | Write README.md (setup, env vars, advanced feature choices, known limitations) | README complete |
-| 8.8 | Record 3–5 min video walkthrough | Video file ready |
-| 8.9 | Verify conventional commit history | `git log --oneline` shows feat/fix/chore prefixes |
-| 8.10 | (Bonus) Add Swagger/OpenAPI docs with `swagger-jsdoc` + `swagger-ui-express` at `/api/docs` | Docs render |
+| 8.8 | (Bonus) Add Swagger/OpenAPI docs with `swagger-jsdoc` + `swagger-ui-express` at `/api/docs` | Docs render |
 
 ---
 

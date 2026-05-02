@@ -10,6 +10,7 @@ const itemSelect = {
   assigneeId: true,
   title: true,
   description: true,
+  attachments: true,
   priority: true,
   status: true,
   dueDate: true,
@@ -24,7 +25,7 @@ const itemSelect = {
 
 export async function createActionItem(req, res) {
   const { workspaceId } = req.params;
-  const { title, description, assigneeId, priority, status, dueDate, goalId } = req.body;
+  const { title, description, attachments, assigneeId, priority, status, dueDate, goalId } = req.body;
 
   // Validate assignee belongs to this workspace
   if (assigneeId) {
@@ -52,6 +53,7 @@ export async function createActionItem(req, res) {
       workspaceId,
       title,
       description: description || null,
+      attachments: attachments || null,
       assigneeId: assigneeId || null,
       priority: priority || 'MEDIUM',
       status: status || 'TODO',
@@ -128,7 +130,7 @@ export async function updateActionItem(req, res) {
     throw forbidden('Only the assignee or an Admin can update this item');
   }
 
-  const { title, description, assigneeId, priority, status, dueDate, goalId, position } = req.body;
+  const { title, description, attachments, assigneeId, priority, status, dueDate, goalId, position } = req.body;
 
   const diff = {};
   if (status !== undefined && status !== existing.status)
@@ -141,6 +143,7 @@ export async function updateActionItem(req, res) {
     data: {
       ...(title !== undefined && { title }),
       ...(description !== undefined && { description }),
+      ...(attachments !== undefined && { attachments: attachments || null }),
       ...(assigneeId !== undefined && { assigneeId: assigneeId || null }),
       ...(priority !== undefined && { priority }),
       ...(status !== undefined && { status }),

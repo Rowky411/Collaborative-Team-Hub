@@ -13,6 +13,7 @@ import announcementRoutes from './routes/announcement.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
 import analyticsRoutes from './routes/analytics.routes.js';
 import auditLogRoutes from './routes/auditLog.routes.js';
+import uploadRoutes from './routes/upload.routes.js';
 
 export function createApp() {
   const app = express();
@@ -44,6 +45,7 @@ export function createApp() {
   app.use('/api/notifications', notificationRoutes);
   app.use('/api/workspaces/:workspaceId/analytics', analyticsRoutes);
   app.use('/api/workspaces/:workspaceId/audit-log', auditLogRoutes);
+  app.use('/api/upload', uploadRoutes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

@@ -8,6 +8,7 @@ import { useGoalStore } from "../../../../../lib/stores/goalStore";
 import { KanbanBoard } from "../../../../../components/action-items/KanbanBoard";
 import { ActionItemList } from "../../../../../components/action-items/ActionItemList";
 import { CreateActionItemModal } from "../../../../../components/action-items/CreateActionItemModal";
+import { ActionItemDetailModal } from "../../../../../components/action-items/ActionItemDetailModal";
 
 const PRIORITY_FILTERS = [
   { value: "", label: "All priorities" },
@@ -41,6 +42,7 @@ export default function ActionItemsPage() {
   // Modal state
   const [showCreate, setShowCreate]   = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [viewingItem, setViewingItem] = useState(null);
 
   // Toast
   const [toast, setToast] = useState(null);
@@ -117,6 +119,10 @@ export default function ActionItemsPage() {
 
   function openEdit(item) {
     setEditingItem(item);
+  }
+
+  function openView(item) {
+    setViewingItem(item);
   }
 
   // ─── Scope toggle ────────────────────────────────────────────────────────────
@@ -242,11 +248,12 @@ export default function ActionItemsPage() {
             <KanbanBoard
               items={items}
               onDragEnd={handleDragEnd}
-              onCardClick={openEdit}
+              onCardView={openView}
+              onCardEdit={openEdit}
             />
           )}
           {view === "list" && (
-            <ActionItemList items={items} onRowClick={openEdit} />
+            <ActionItemList items={items} onRowClick={openView} onRowEdit={openEdit} />
           )}
         </>
       )}
@@ -268,6 +275,14 @@ export default function ActionItemsPage() {
         members={members}
         goals={goals}
         initialItem={editingItem}
+      />
+
+      {/* Detail / view modal */}
+      <ActionItemDetailModal
+        open={!!viewingItem}
+        item={viewingItem}
+        onClose={() => setViewingItem(null)}
+        onEdit={openEdit}
       />
     </div>
   );

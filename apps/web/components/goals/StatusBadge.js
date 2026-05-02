@@ -1,10 +1,10 @@
 "use client";
 
 const CONFIG = {
-  NOT_STARTED: { label: "Not Started", color: "#8888a0" },
+  NOT_STARTED: { label: "On Track",    color: "#22c55e" },
   IN_PROGRESS: { label: "In Progress", color: "#7c5cfc" },
   COMPLETED:   { label: "Completed",   color: "#22c55e" },
-  OVERDUE:     { label: "Overdue",     color: "#ef4444" },
+  OVERDUE:     { label: "At Risk",     color: "#f97316" },
 };
 
 export function StatusBadge({ status, onClick, className = "" }) {

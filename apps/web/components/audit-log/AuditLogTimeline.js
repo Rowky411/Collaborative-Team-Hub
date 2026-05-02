@@ -1,31 +1,26 @@
 "use client";
 
-import { FixedSizeList } from "react-window";
 import { AuditLogEntry } from "./AuditLogEntry";
-
-const ROW_HEIGHT = 68;
-const LIST_HEIGHT = 560;
-
-function Row({ index, style, data }) {
-  const { items, selectedId, onSelect } = data;
-  const entry = items[index];
-  return (
-    <div style={style}>
-      <AuditLogEntry
-        entry={entry}
-        selected={selectedId === entry.id}
-        onClick={onSelect}
-      />
-    </div>
-  );
-}
 
 export function AuditLogTimeline({ items, selectedId, onSelect, loading }) {
   if (loading) {
     return (
-      <div className="flex flex-col gap-2 py-4">
-        {[...Array(6)].map((_, i) => (
-          <div key={i} className="mx-4 h-12 animate-pulse rounded-xl bg-[color:var(--border)]/30" />
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        {[...Array(8)].map((_, i) => (
+          <div
+            key={i}
+            style={{
+              display: "flex", alignItems: "center", gap: 12,
+              padding: "11px 18px",
+              borderBottom: "1px solid var(--border)",
+            }}
+          >
+            <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--border)", flexShrink: 0 }} />
+            <div style={{ flex: 1 }}>
+              <div style={{ height: 13, width: "55%", borderRadius: 6, background: "var(--border)", marginBottom: 6 }} />
+              <div style={{ height: 10, width: "35%", borderRadius: 6, background: "var(--border)" }} />
+            </div>
+          </div>
         ))}
       </div>
     );
@@ -33,23 +28,22 @@ export function AuditLogTimeline({ items, selectedId, onSelect, loading }) {
 
   if (!items.length) {
     return (
-      <p className="py-16 text-center text-sm text-[color:var(--muted)]">
+      <p style={{ padding: "48px 18px", textAlign: "center", fontSize: 13, color: "var(--muted)" }}>
         No audit log entries match the current filters.
       </p>
     );
   }
 
-  const height = Math.min(items.length * ROW_HEIGHT, LIST_HEIGHT);
-
   return (
-    <FixedSizeList
-      height={height}
-      itemCount={items.length}
-      itemSize={ROW_HEIGHT}
-      width="100%"
-      itemData={{ items, selectedId, onSelect }}
-    >
-      {Row}
-    </FixedSizeList>
+    <div>
+      {items.map((entry) => (
+        <AuditLogEntry
+          key={entry.id}
+          entry={entry}
+          selected={selectedId === entry.id}
+          onClick={onSelect}
+        />
+      ))}
+    </div>
   );
 }

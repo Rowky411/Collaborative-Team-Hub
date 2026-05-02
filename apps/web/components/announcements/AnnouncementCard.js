@@ -19,99 +19,109 @@ function timeAgo(iso) {
 function Avatar({ user }) {
   if (!user) return null;
   if (user.avatarUrl) {
-    return <img src={user.avatarUrl} alt={user.name} className="h-8 w-8 rounded-full object-cover shrink-0" />;
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={user.avatarUrl} alt={user.name} style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+    );
   }
   return (
-    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--accent)] text-xs font-bold text-white">
+    <span style={{
+      display: "inline-flex", width: 32, height: 32, flexShrink: 0,
+      alignItems: "center", justifyContent: "center",
+      borderRadius: "50%", background: "var(--accent, #7c5cfc)",
+      fontSize: 12, fontWeight: 700, color: "#fff",
+    }}>
       {user.name?.[0]?.toUpperCase()}
     </span>
   );
 }
 
 export function AnnouncementCard({
-  announcement,
-  isAdmin,
-  currentUserId,
-  workspaceId,
-  members,
-  onPin,
-  onEdit,
-  onDelete,
-  onPostComment,
-  onExpand,
+  announcement, isAdmin, currentUserId, workspaceId,
+  members, onPin, onEdit, onDelete, onPostComment, onExpand,
 }) {
   const [expanded, setExpanded] = useState(false);
-
   const commentCount = announcement._count?.comments ?? 0;
+  const accentColor = "var(--accent, #7c5cfc)";
 
   return (
     <article
-      className={`rounded-2xl border bg-[color:var(--background)] shadow-sm transition-shadow hover:shadow-md
-        ${announcement.isPinned ? "border-[color:var(--accent)]/50 ring-1 ring-[color:var(--accent)]/20" : "border-[color:var(--border)]"}
-      `}
+      style={{
+        borderRadius: 16,
+        background: "var(--card)",
+        border: announcement.isPinned
+          ? `1px solid color-mix(in srgb, var(--accent) 35%, transparent)`
+          : "1px solid var(--border)",
+        outline: announcement.isPinned
+          ? `1px solid color-mix(in srgb, var(--accent) 12%, transparent)`
+          : "none",
+        overflow: "hidden",
+      }}
     >
       {/* Pin banner */}
       {announcement.isPinned && (
-        <div className="flex items-center gap-1.5 rounded-t-2xl bg-[color:var(--accent)]/10 px-4 py-1.5 text-xs font-semibold text-[color:var(--accent)]">
+        <div style={{
+          display: "flex", alignItems: "center", gap: 6,
+          padding: "6px 18px",
+          background: "color-mix(in srgb, var(--accent) 8%, transparent)",
+          fontSize: 11, fontWeight: 600, color: accentColor,
+        }}>
           📌 Pinned announcement
         </div>
       )}
 
-      <div className="p-5">
+      <div style={{ padding: "18px 20px" }}>
         {/* Header */}
-        <div className="mb-3 flex items-start justify-between gap-3">
+        <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-2.5">
             <Avatar user={announcement.author} />
             <div>
-              <p className="text-sm font-semibold">{announcement.author?.name}</p>
-              <p className="text-xs text-[color:var(--muted)]">{timeAgo(announcement.createdAt)}</p>
+              <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{announcement.author?.name}</p>
+              <p style={{ fontSize: 11, color: "var(--muted)" }}>{timeAgo(announcement.createdAt)}</p>
             </div>
           </div>
 
-          {/* Admin actions */}
           {isAdmin && (
-            <div className="flex items-center gap-1 shrink-0">
+            <div className="flex items-center gap-1 flex-shrink-0">
               <button
                 onClick={() => onPin?.(announcement)}
                 title={announcement.isPinned ? "Unpin" : "Pin"}
-                className={`rounded-lg p-1.5 text-sm transition
-                  ${announcement.isPinned
-                    ? "text-[color:var(--accent)] hover:bg-[color:var(--accent)]/10"
-                    : "text-[color:var(--muted)] hover:bg-[color:var(--border)]/30"
-                  }`}
-              >
-                📌
-              </button>
+                style={{
+                  width: 28, height: 28, borderRadius: 7, border: "none",
+                  background: announcement.isPinned ? "color-mix(in srgb, var(--accent) 10%, transparent)" : "transparent",
+                  color: announcement.isPinned ? accentColor : "var(--muted)",
+                  cursor: "pointer", fontSize: 13,
+                }}
+                className="hover:bg-[color:var(--card-hover)]"
+              >📌</button>
               <button
                 onClick={() => onEdit?.(announcement)}
-                className="rounded-lg p-1.5 text-sm text-[color:var(--muted)] hover:bg-[color:var(--border)]/30 transition"
-              >
-                ✏️
-              </button>
+                style={{ width: 28, height: 28, borderRadius: 7, border: "none", background: "transparent", color: "var(--muted)", cursor: "pointer", fontSize: 13 }}
+                className="hover:bg-[color:var(--card-hover)]"
+              >✏️</button>
               <button
                 onClick={() => onDelete?.(announcement.id)}
-                className="rounded-lg p-1.5 text-sm text-[color:var(--muted)] hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 transition"
-              >
-                🗑
-              </button>
+                style={{ width: 28, height: 28, borderRadius: 7, border: "none", background: "transparent", color: "var(--muted)", cursor: "pointer", fontSize: 13 }}
+                className="hover:bg-[color:var(--card-hover)]"
+              >🗑</button>
             </div>
           )}
         </div>
 
         {/* Title */}
-        <h2 className="mb-2 text-base font-semibold text-[color:var(--foreground)]">
+        <h2 style={{ marginBottom: 8, fontSize: 15, fontWeight: 700, color: "var(--text)", letterSpacing: "-0.015em" }}>
           {announcement.title}
         </h2>
 
-        {/* Body (Tiptap read-only) */}
+        {/* Body */}
         {announcement.body && (
-          <div className="mb-3 text-sm text-[color:var(--foreground)]">
+          <div style={{ marginBottom: 12, fontSize: 13, color: "var(--text-sub)" }}>
             <RichTextEditor content={announcement.body} editable={false} />
           </div>
         )}
 
         {/* Reactions */}
-        <div className="mb-3">
+        <div style={{ marginBottom: 12 }}>
           <ReactionBar
             workspaceId={workspaceId}
             announcementId={announcement.id}
@@ -121,20 +131,21 @@ export function AnnouncementCard({
           />
         </div>
 
-        {/* Expand/collapse comments */}
+        {/* Comments toggle */}
         <button
           onClick={() => {
             const next = !expanded;
             setExpanded(next);
             if (next) onExpand?.(announcement.id);
           }}
-          className="text-xs font-medium text-[color:var(--muted)] hover:text-[color:var(--accent)] transition"
+          style={{ fontSize: 12, fontWeight: 500, color: "var(--muted)", background: "none", border: "none", cursor: "pointer", transition: "color 0.12s" }}
+          className="hover:text-[color:var(--accent)]"
         >
           💬 {commentCount} comment{commentCount !== 1 ? "s" : ""} {expanded ? "▲" : "▼"}
         </button>
 
         {expanded && (
-          <div className="mt-4 flex flex-col gap-4 border-t border-[color:var(--border)] pt-4">
+          <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: 16 }}>
             <CommentList
               comments={announcement.comments}
               workspaceId={workspaceId}

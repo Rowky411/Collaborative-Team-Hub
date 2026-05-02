@@ -30,6 +30,8 @@ export default function GoalsPage() {
   const [ownerFilter, setOwnerFilter] = useState("");
   const [showForm, setShowForm] = useState(false);
 
+  const accentColor = currentWorkspace?.accentColor || "#7c5cfc";
+
   useEffect(() => {
     fetchGoals(workspaceId, { status: statusFilter || undefined, ownerId: ownerFilter || undefined });
   }, [workspaceId, statusFilter, ownerFilter, fetchGoals]);
@@ -43,52 +45,102 @@ export default function GoalsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Goals</h1>
+        <div style={{ fontSize: 20, fontWeight: 700, color: "var(--text)", letterSpacing: "-0.02em" }}>Goals</div>
         <button
           onClick={() => setShowForm(true)}
-          className="rounded-md bg-[color:var(--accent)] px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+          style={{
+            padding: "7px 16px",
+            borderRadius: 10,
+            background: accentColor,
+            color: "#fff",
+            fontSize: 13,
+            fontWeight: 600,
+            border: "none",
+            cursor: "pointer",
+            transition: "opacity 0.12s",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
         >
           + New Goal
         </button>
       </div>
 
-      <div className="flex flex-wrap gap-3">
-        <div>
-          <label className="mr-1 text-xs text-[color:var(--muted)]">Status</label>
+      {/* Filter chips */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {STATUS_FILTERS.map((f) => {
+          const active = statusFilter === f.value;
+          return (
+            <button
+              key={f.value}
+              onClick={() => setStatusFilter(f.value)}
+              style={{
+                padding: "4px 12px",
+                borderRadius: 999,
+                background: active ? accentColor + "1a" : "transparent",
+                border: `1px solid ${active ? accentColor + "44" : "var(--border)"}`,
+                color: active ? accentColor : "var(--muted)",
+                fontSize: 12,
+                fontWeight: active ? 600 : 400,
+                cursor: "pointer",
+                transition: "all 0.12s",
+              }}
+            >
+              {f.label}
+            </button>
+          );
+        })}
+
+        {/* Owner filter */}
+        {members.length > 0 && (
           <select
-            className="rounded-md border border-[color:var(--border)] bg-[color:var(--background)] px-2 py-1 text-sm"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            {STATUS_FILTERS.map((f) => (
-              <option key={f.value} value={f.value}>{f.label}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="mr-1 text-xs text-[color:var(--muted)]">Owner</label>
-          <select
-            className="rounded-md border border-[color:var(--border)] bg-[color:var(--background)] px-2 py-1 text-sm"
             value={ownerFilter}
             onChange={(e) => setOwnerFilter(e.target.value)}
+            style={{
+              padding: "4px 10px",
+              borderRadius: 999,
+              border: "1px solid var(--border)",
+              background: ownerFilter ? accentColor + "1a" : "var(--input-bg)",
+              color: ownerFilter ? accentColor : "var(--muted)",
+              fontSize: 12,
+              cursor: "pointer",
+              outline: "none",
+            }}
           >
-            <option value="">All</option>
+            <option value="">All owners</option>
             {members.map((m) => (
               <option key={m.userId} value={m.userId}>{m.name}</option>
             ))}
           </select>
-        </div>
+        )}
+
+        <span className="font-mono ml-auto" style={{ fontSize: 11, color: "var(--muted)" }}>
+          {goals.length} goal{goals.length !== 1 ? "s" : ""}
+        </span>
       </div>
 
-      {loading && <p className="text-sm text-[color:var(--muted)]">Loading…</p>}
-
-      {!loading && goals.length === 0 && (
-        <p className="text-sm text-[color:var(--muted)]">No goals yet. Create one to get started.</p>
+      {loading && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              style={{ height: 140, borderRadius: 14, background: "var(--card)", border: "1px solid var(--border)", opacity: 0.5 }}
+              className="animate-pulse"
+            />
+          ))}
+        </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {!loading && goals.length === 0 && (
+        <div style={{ background: "var(--card)", border: "1.5px dashed var(--subtle)", borderRadius: 14, padding: "40px 24px", textAlign: "center" }}>
+          <p style={{ fontSize: 13, color: "var(--muted)" }}>No goals yet. Create one to get started.</p>
+        </div>
+      )}
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
         {goals.map((goal) => (
           <GoalCard key={goal.id} goal={goal} />
         ))}

@@ -1,7 +1,6 @@
 "use client";
 
-import { EMOJI_SET } from "../../lib/stores/announcementStore";
-import { useAnnouncementStore } from "../../lib/stores/announcementStore";
+import { EMOJI_SET, useAnnouncementStore } from "../../lib/stores/announcementStore";
 
 function groupReactions(reactions) {
   return (reactions || []).reduce((acc, r) => {
@@ -24,12 +23,17 @@ function Avatar({ user }) {
   if (!user) return null;
   if (user.avatarUrl) {
     return (
-      <img src={user.avatarUrl} alt={user.name}
-        className="h-7 w-7 rounded-full object-cover ring-2 ring-white dark:ring-slate-800 shrink-0" />
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={user.avatarUrl} alt={user.name} style={{ width: 26, height: 26, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
     );
   }
   return (
-    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[color:var(--accent)] text-[11px] font-bold text-white ring-2 ring-white dark:ring-slate-800">
+    <span style={{
+      display: "inline-flex", width: 26, height: 26, flexShrink: 0,
+      alignItems: "center", justifyContent: "center",
+      borderRadius: "50%", background: "var(--accent, #7c5cfc)",
+      fontSize: 11, fontWeight: 700, color: "#fff",
+    }}>
       {user.name?.[0]?.toUpperCase()}
     </span>
   );
@@ -48,13 +52,20 @@ function CommentReaction({ workspaceId, announcementId, commentId, reactions, cu
         <button
           key={emoji}
           onClick={() => toggleCommentReaction(workspaceId, announcementId, commentId, emoji)}
-          className={`flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-xs transition
-            ${userReacted.has(emoji)
-              ? "border-[color:var(--accent)] bg-[color:var(--accent)]/10 text-[color:var(--accent)]"
-              : "border-[color:var(--border)] hover:border-[color:var(--accent)]/40"
-            }`}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 3,
+            padding: "1px 7px", borderRadius: 999, fontSize: 11, cursor: "pointer",
+            border: userReacted.has(emoji)
+              ? "1px solid color-mix(in srgb, var(--accent) 40%, transparent)"
+              : "1px solid var(--border)",
+            background: userReacted.has(emoji)
+              ? "color-mix(in srgb, var(--accent) 8%, transparent)"
+              : "transparent",
+            color: userReacted.has(emoji) ? "var(--accent)" : "var(--text)",
+            transition: "all 0.12s",
+          }}
         >
-          {emoji} <span className="font-medium">{counts[emoji]}</span>
+          {emoji} <span style={{ fontWeight: 600 }}>{counts[emoji]}</span>
         </button>
       ))}
     </div>
@@ -63,20 +74,20 @@ function CommentReaction({ workspaceId, announcementId, commentId, reactions, cu
 
 export function CommentList({ comments = [], workspaceId, announcementId, currentUserId }) {
   if (comments.length === 0) {
-    return <p className="text-sm text-[color:var(--muted)]">No comments yet. Be the first!</p>;
+    return <p style={{ fontSize: 12, color: "var(--muted)" }}>No comments yet. Be the first!</p>;
   }
 
   return (
     <div className="flex flex-col gap-4">
       {comments.map((comment) => (
-        <div key={comment.id} className="flex gap-3">
+        <div key={comment.id} className="flex gap-2.5">
           <Avatar user={comment.author} />
-          <div className="flex-1">
+          <div style={{ flex: 1 }}>
             <div className="flex items-baseline gap-2">
-              <span className="text-sm font-semibold">{comment.author?.name}</span>
-              <span className="text-xs text-[color:var(--muted)]">{timeAgo(comment.createdAt)}</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{comment.author?.name}</span>
+              <span style={{ fontSize: 10, color: "var(--muted)" }}>{timeAgo(comment.createdAt)}</span>
             </div>
-            <p className="mt-0.5 text-sm text-[color:var(--foreground)] whitespace-pre-wrap">{comment.body}</p>
+            <p style={{ marginTop: 2, fontSize: 13, color: "var(--text-sub)", whiteSpace: "pre-wrap" }}>{comment.body}</p>
             <CommentReaction
               workspaceId={workspaceId}
               announcementId={announcementId}

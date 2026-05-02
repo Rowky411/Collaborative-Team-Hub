@@ -72,7 +72,7 @@ export default function GoalDetailPage() {
   }
 
   if (loading && !goal) {
-    return <p className="text-sm text-[color:var(--muted)]">Loading…</p>;
+    return <p className="text-sm" style={{ color: "var(--muted)" }}>Loading…</p>;
   }
   if (error && !goal) {
     return <p className="text-sm text-red-500">{error}</p>;
@@ -84,53 +84,56 @@ export default function GoalDetailPage() {
   return (
     <div className="flex flex-col gap-6">
       {toast && (
-        <div className="rounded bg-red-500 px-3 py-2 text-sm text-white">{toast}</div>
+        <div style={{ background: "var(--red)", borderRadius: 8, padding: "3px 10px", fontSize: 11, color: "#fff", position: "absolute", top: 8, right: 8, zIndex: 10 }}>{toast}</div>
       )}
 
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={() => router.push(`/workspaces/${workspaceId}/goals`)}
-              className="text-sm text-[color:var(--muted)] hover:underline"
-            >
-              ← Goals
-            </button>
-          </div>
-          <h1 className="mt-2 text-2xl font-semibold">{goal.title}</h1>
-          {goal.description && (
-            <p className="mt-1 text-sm text-[color:var(--muted)]">{goal.description}</p>
-          )}
-          <div className="mt-2 flex items-center gap-3 flex-wrap">
-            <div className="relative group">
-              <StatusBadge status={goal.status} onClick={null} />
-              <div className="absolute left-0 top-full mt-1 z-20 hidden group-hover:block rounded-md border border-[color:var(--border)] bg-[color:var(--background)] shadow-md">
-                {STATUS_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => handleStatusChange(opt.value)}
-                    className="block w-full px-3 py-1.5 text-left text-xs hover:bg-[color:var(--border)]/30"
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
+      <div style={{ borderRadius: 14, border: "1px solid var(--border)", background: "var(--card)", padding: "18px 22px" }}>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => router.push(`/workspaces/${workspaceId}/goals`)}
+                style={{ fontSize: 13, color: "var(--muted)" }}
+                className="hover:underline"
+              >
+                ← Goals
+              </button>
             </div>
-            {goal.owner && (
-              <span className="text-sm text-[color:var(--muted)]">Owner: {goal.owner.name}</span>
+            <h1 className="mt-2" style={{ fontSize: 20, fontWeight: 700, color: "var(--text)", letterSpacing: "-0.025em" }}>{goal.title}</h1>
+            {goal.description && (
+              <p className="mt-1" style={{ fontSize: 13, color: "var(--muted)" }}>{goal.description}</p>
             )}
-            {goal.dueDate && (
-              <span className="text-sm text-[color:var(--muted)]">
-                Due {new Date(goal.dueDate).toLocaleDateString()}
-              </span>
-            )}
+            <div className="mt-2 flex items-center gap-3 flex-wrap">
+              <div className="relative group">
+                <StatusBadge status={goal.status} onClick={null} />
+                <div className="absolute left-0 top-full mt-1 z-20 hidden group-hover:block" style={{ borderRadius: 10, border: "1px solid var(--border-strong)", background: "var(--surface)", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 130, overflow: "hidden" }}>
+                  {STATUS_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => handleStatusChange(opt.value)}
+                      style={{ display: "block", width: "100%", padding: "8px 12px", textAlign: "left", fontSize: 12, color: "var(--text)", background: "none", border: 0, cursor: "pointer" }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {goal.owner && (
+                <span style={{ fontSize: 13, color: "var(--muted)" }}>Owner: {goal.owner.name}</span>
+              )}
+              {goal.dueDate && (
+                <span style={{ fontSize: 13, color: "var(--muted)" }}>
+                  Due {new Date(goal.dueDate).toLocaleDateString()}
+                </span>
+              )}
+            </div>
           </div>
-        </div>
 
-        <div className="flex flex-col items-center gap-1 shrink-0">
-          <ProgressRing progress={progress} size={56} stroke={5} />
-          <span className="text-xs text-[color:var(--muted)]">{progress}%</span>
+          <div className="flex flex-col items-center gap-1 shrink-0">
+            <ProgressRing progress={progress} size={56} stroke={5} />
+            <span className="text-xs text-[color:var(--muted)]">{progress}%</span>
+          </div>
         </div>
       </div>
 
@@ -138,14 +141,14 @@ export default function GoalDetailPage() {
       <div className="flex gap-2">
         <button
           onClick={() => setEditOpen(true)}
-          className="rounded-md border border-[color:var(--border)] px-3 py-1.5 text-sm hover:bg-[color:var(--border)]/30"
+          style={{ padding: "6px 14px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--input-bg)", fontSize: 12, color: "var(--text)", cursor: "pointer" }}
         >
           Edit
         </button>
         {isAdmin && (
           <button
             onClick={handleDelete}
-            className="rounded-md border border-red-200 px-3 py-1.5 text-sm text-red-500 hover:bg-red-50"
+            style={{ padding: "6px 14px", borderRadius: 9, border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.06)", fontSize: 12, color: "var(--red)", cursor: "pointer" }}
           >
             Delete
           </button>
@@ -153,7 +156,7 @@ export default function GoalDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-[color:var(--border)]">
+      <div style={{ borderBottom: "1px solid var(--border)" }}>
         <div className="flex gap-1">
           {TABS.map((t) => (
             <button
@@ -161,9 +164,14 @@ export default function GoalDetailPage() {
               onClick={() => setTab(t)}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition ${
                 tab === t
-                  ? "border-[color:var(--accent)] text-[color:var(--accent)]"
-                  : "border-transparent text-[color:var(--muted)] hover:text-[color:var(--foreground)]"
+                  ? "border-[color:var(--accent)]"
+                  : "border-transparent"
               }`}
+              style={
+                tab === t
+                  ? { borderColor: "var(--accent)", color: "var(--accent)" }
+                  : { color: "var(--muted)" }
+              }
             >
               {t}
             </button>
@@ -174,7 +182,7 @@ export default function GoalDetailPage() {
       {/* Tab content */}
       {tab === "Overview" && (
         <div className="flex flex-col gap-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-[color:var(--muted)]">Milestones</h2>
+          <h2 style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--muted)" }}>Milestones</h2>
           <MilestoneList
             milestones={goal.milestones}
             workspaceId={workspaceId}

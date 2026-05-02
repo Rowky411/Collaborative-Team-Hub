@@ -34,6 +34,7 @@ export default function ActionItemsPage() {
   const reset        = useActionItemStore((s) => s.reset);
 
   const members          = useWorkspaceStore((s) => s.members);
+  const accentColor      = useWorkspaceStore((s) => s.currentWorkspace?.accentColor) || "#7c5cfc";
   const goals            = useGoalStore((s) => s.goals);
   const fetchGoals       = useGoalStore((s) => s.fetchGoals);
 
@@ -125,8 +126,7 @@ export default function ActionItemsPage() {
 
   const isAll = filters.assigneeId === "all";
 
-  const selectCls =
-    "rounded-lg border border-[color:var(--border)] bg-[color:var(--background)] px-2 py-1.5 text-sm text-[color:var(--foreground)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]/40";
+  const selectCls = "rounded-full text-xs font-medium outline-none";
 
   return (
     <div className="flex flex-col gap-6">
@@ -138,6 +138,7 @@ export default function ActionItemsPage() {
               ? "bg-red-600 text-white"
               : "bg-emerald-600 text-white"
           }`}
+          style={{ borderRadius: 12 }}
         >
           {toast.msg}
         </div>
@@ -145,28 +146,22 @@ export default function ActionItemsPage() {
 
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold">Action Items</h1>
+        <h1 style={{ fontSize: 20, fontWeight: 700, color: "var(--text)", letterSpacing: "-0.02em" }}>Action Items</h1>
 
         <div className="flex items-center gap-2">
           {/* View toggle */}
-          <div className="flex rounded-lg border border-[color:var(--border)] overflow-hidden text-sm">
+          <div className="flex overflow-hidden text-sm" style={{ border: "1px solid var(--border)", borderRadius: 8 }}>
             <button
               onClick={() => setView("kanban")}
-              className={`px-3 py-1.5 transition ${
-                view === "kanban"
-                  ? "bg-[color:var(--accent)] text-white font-medium"
-                  : "text-[color:var(--muted)] hover:bg-[color:var(--border)]/30"
-              }`}
+              className="px-3 py-1.5 transition"
+              style={view === "kanban" ? { background: accentColor, color: "#fff", fontWeight: 600 } : { color: "var(--muted)" }}
             >
               Kanban
             </button>
             <button
               onClick={() => setView("list")}
-              className={`px-3 py-1.5 transition ${
-                view === "list"
-                  ? "bg-[color:var(--accent)] text-white font-medium"
-                  : "text-[color:var(--muted)] hover:bg-[color:var(--border)]/30"
-              }`}
+              className="px-3 py-1.5 transition"
+              style={view === "list" ? { background: accentColor, color: "#fff", fontWeight: 600 } : { color: "var(--muted)" }}
             >
               List
             </button>
@@ -174,7 +169,8 @@ export default function ActionItemsPage() {
 
           <button
             onClick={() => setShowCreate(true)}
-            className="rounded-lg bg-[color:var(--accent)] px-4 py-1.5 text-sm font-medium text-white hover:opacity-90 transition"
+            className="bg-[color:var(--accent)] px-4 py-1.5 text-sm font-medium text-white hover:opacity-90 transition"
+            style={{ borderRadius: 10 }}
           >
             + New Item
           </button>
@@ -184,24 +180,18 @@ export default function ActionItemsPage() {
       {/* Filter bar */}
       <div className="flex flex-wrap items-center gap-3">
         {/* Scope toggle */}
-        <div className="flex rounded-lg border border-[color:var(--border)] overflow-hidden text-sm">
+        <div className="flex overflow-hidden text-sm" style={{ border: "1px solid var(--border)", borderRadius: 8 }}>
           <button
             onClick={() => toggleScope(false)}
-            className={`px-3 py-1.5 transition ${
-              !isAll
-                ? "bg-[color:var(--accent)]/10 text-[color:var(--accent)] font-medium"
-                : "text-[color:var(--muted)] hover:bg-[color:var(--border)]/30"
-            }`}
+            className="px-3 py-1.5 transition"
+            style={!isAll ? { background: accentColor + "1a", color: accentColor, fontWeight: 500 } : { color: "var(--muted)" }}
           >
             My Items
           </button>
           <button
             onClick={() => toggleScope(true)}
-            className={`px-3 py-1.5 transition ${
-              isAll
-                ? "bg-[color:var(--accent)]/10 text-[color:var(--accent)] font-medium"
-                : "text-[color:var(--muted)] hover:bg-[color:var(--border)]/30"
-            }`}
+            className="px-3 py-1.5 transition"
+            style={isAll ? { background: accentColor + "1a", color: accentColor, fontWeight: 500 } : { color: "var(--muted)" }}
           >
             All Items
           </button>
@@ -210,6 +200,7 @@ export default function ActionItemsPage() {
         {/* Priority filter */}
         <select
           className={selectCls}
+          style={{ padding: "4px 12px", border: "1px solid var(--border)", background: "var(--input-bg)", color: "var(--muted)", borderRadius: 999, fontSize: 12, cursor: "pointer" }}
           value={filters.priority ?? ""}
           onChange={(e) => setFilter("priority", e.target.value || null)}
         >
@@ -222,6 +213,7 @@ export default function ActionItemsPage() {
         {goals.length > 0 && (
           <select
             className={selectCls}
+            style={{ padding: "4px 12px", border: "1px solid var(--border)", background: "var(--input-bg)", color: "var(--muted)", borderRadius: 999, fontSize: 12, cursor: "pointer" }}
             value={filters.goalId ?? ""}
             onChange={(e) => setFilter("goalId", e.target.value || null)}
           >

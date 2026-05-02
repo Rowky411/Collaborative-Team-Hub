@@ -1,10 +1,10 @@
 "use client";
 
 const CONFIG = {
-  NOT_STARTED: { label: "Not Started", cls: "bg-gray-100 text-gray-600" },
-  IN_PROGRESS: { label: "In Progress", cls: "bg-blue-100 text-blue-700" },
-  COMPLETED:   { label: "Completed",   cls: "bg-green-100 text-green-700" },
-  OVERDUE:     { label: "Overdue",     cls: "bg-red-100 text-red-700" },
+  NOT_STARTED: { label: "Not Started", color: "#8888a0" },
+  IN_PROGRESS: { label: "In Progress", color: "#7c5cfc" },
+  COMPLETED:   { label: "Completed",   color: "#22c55e" },
+  OVERDUE:     { label: "Overdue",     color: "#ef4444" },
 };
 
 export function StatusBadge({ status, onClick, className = "" }) {
@@ -13,7 +13,22 @@ export function StatusBadge({ status, onClick, className = "" }) {
   return (
     <Tag
       onClick={onClick}
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${cfg.cls} ${onClick ? "cursor-pointer hover:opacity-80" : ""} ${className}`}
+      className={className}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        padding: "3px 9px",
+        borderRadius: 999,
+        background: cfg.color + "1a",
+        color: cfg.color,
+        fontSize: 11,
+        fontWeight: 600,
+        letterSpacing: "0.02em",
+        whiteSpace: "nowrap",
+        fontFamily: "var(--font-dm-mono), ui-monospace, monospace",
+        cursor: onClick ? "pointer" : "default",
+        border: "none",
+      }}
       aria-label={onClick ? `Change status, current: ${cfg.label}` : cfg.label}
     >
       {cfg.label}

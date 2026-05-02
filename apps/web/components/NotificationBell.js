@@ -53,10 +53,18 @@ export function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-10 z-50 w-80 rounded-2xl border border-[color:var(--border)] bg-[color:var(--background)] shadow-2xl overflow-hidden">
+        <div
+          style={{
+            background: "var(--surface)",
+            border: "1px solid var(--border-strong)",
+            borderRadius: 14,
+            boxShadow: "0 12px 40px rgba(0,0,0,0.18)",
+          }}
+          className="absolute right-0 top-10 z-50 w-80 overflow-hidden"
+        >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-[color:var(--border)] px-4 py-3">
-            <span className="text-sm font-semibold">Notifications</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>Notifications</span>
             {unreadCount > 0 && (
               <button
                 onClick={markAllRead}
@@ -70,7 +78,7 @@ export function NotificationBell() {
           {/* List */}
           <div className="max-h-80 overflow-y-auto divide-y divide-[color:var(--border)]">
             {notifications.length === 0 && (
-              <p className="px-4 py-6 text-center text-sm text-[color:var(--muted)]">
+              <p className="px-4 py-6 text-center text-sm" style={{ color: "var(--muted)" }}>
                 No notifications yet
               </p>
             )}
@@ -78,14 +86,14 @@ export function NotificationBell() {
               <button
                 key={n.id}
                 onClick={() => { if (!n.isRead) markRead(n.id); }}
-                className={`w-full flex items-start gap-3 px-4 py-3 text-left transition hover:bg-[color:var(--border)]/20
-                  ${!n.isRead ? "bg-[color:var(--accent)]/5" : ""}`}
+                className="w-full flex items-start gap-3 px-4 py-3 text-left transition hover:bg-[color:var(--border)]/20"
+                style={!n.isRead ? { background: "color-mix(in srgb, var(--accent) 5%, transparent)" } : {}}
               >
                 <span className="mt-0.5 text-base">
                   {n.type === "MENTION" ? "💬" : n.type === "WORKSPACE_INVITE" ? "✉️" : "🎯"}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-[color:var(--foreground)]">
+                  <p className="text-sm" style={{ color: "var(--text)" }}>
                     {TYPE_LABELS[n.type] || n.type}
                   </p>
                   <p className="text-xs text-[color:var(--muted)]">{timeAgo(n.createdAt)}</p>

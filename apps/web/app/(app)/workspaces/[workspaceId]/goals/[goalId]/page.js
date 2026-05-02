@@ -9,6 +9,7 @@ import { ProgressRing } from "../../../../../../components/goals/ProgressRing";
 import { MilestoneList } from "../../../../../../components/goals/MilestoneList";
 import { GoalUpdateFeed } from "../../../../../../components/goals/GoalUpdateFeed";
 import { GoalForm } from "../../../../../../components/goals/GoalForm";
+import { GoalActionItems } from "../../../../../../components/goals/GoalActionItems";
 
 function avgProgress(milestones) {
   if (!milestones?.length) return 0;
@@ -29,6 +30,7 @@ export default function GoalDetailPage() {
   const error = useGoalStore((s) => s.error);
 
   const currentWorkspace = useWorkspaceStore((s) => s.currentWorkspace);
+  const members = useWorkspaceStore((s) => s.members);
   const isAdmin = currentWorkspace?.role === "ADMIN";
 
   const [tab, setTab] = useState("Overview");
@@ -191,7 +193,13 @@ export default function GoalDetailPage() {
       )}
 
       {tab === "Action Items" && (
-        <p className="text-sm text-[color:var(--muted)]">Action items coming in Phase 4.</p>
+        <GoalActionItems
+          workspaceId={workspaceId}
+          goalId={goalId}
+          goal={goal}
+          members={members}
+          isAdmin={isAdmin}
+        />
       )}
 
       <GoalForm

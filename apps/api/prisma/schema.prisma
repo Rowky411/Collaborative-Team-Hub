@@ -19,15 +19,16 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  workspaces    WorkspaceMember[]
-  ownedGoals    Goal[]            @relation("GoalOwner")
-  assignedItems ActionItem[]      @relation("ActionItemAssignee")
-  goalUpdates   GoalUpdate[]
-  comments      Comment[]
-  reactions     Reaction[]
-  mentions      Mention[]
-  notifications Notification[]
-  refreshTokens RefreshToken[]
+  workspaces         WorkspaceMember[]
+  ownedGoals         Goal[]            @relation("GoalOwner")
+  assignedItems      ActionItem[]      @relation("ActionItemAssignee")
+  goalUpdates        GoalUpdate[]
+  authoredAnnouncements Announcement[]
+  comments           Comment[]
+  reactions          Reaction[]
+  mentions           Mention[]
+  notifications      Notification[]
+  refreshTokens      RefreshToken[]
 
   @@index([email])
 }
@@ -186,6 +187,7 @@ model Announcement {
   updatedAt   DateTime @updatedAt
 
   workspace Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  author    User       @relation(fields: [authorId], references: [id])
   reactions Reaction[]
   comments  Comment[]
 

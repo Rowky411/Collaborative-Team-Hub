@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "../../lib/stores/authStore";
+import { NotificationBell } from "../../components/NotificationBell";
 
 export default function AppLayout({ children }) {
   const router = useRouter();
@@ -44,6 +45,7 @@ export default function AppLayout({ children }) {
             <Link href="/workspaces" className="hover:underline">
               Workspaces
             </Link>
+            <NotificationBell />
             <Link href="/profile" className="hover:underline">
               {user?.name || "Profile"}
             </Link>

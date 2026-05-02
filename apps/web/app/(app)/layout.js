@@ -3,12 +3,15 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "../../lib/stores/authStore";
+import { useWorkspaceStore } from "../../lib/stores/workspaceStore";
+import { getSocket } from "../../lib/socket";
 import { FluxTopNav } from "../../components/layout/FluxTopNav";
 
 export default function AppLayout({ children }) {
   const router = useRouter();
   const status = useAuthStore((s) => s.status);
   const hydrate = useAuthStore((s) => s.hydrate);
+  const addWorkspace = useWorkspaceStore((s) => s.addWorkspace);
 
   useEffect(() => {
     if (status === "idle") hydrate();
@@ -17,6 +20,14 @@ export default function AppLayout({ children }) {
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/login");
   }, [status, router]);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    const socket = getSocket();
+    const onInvited = ({ workspace }) => addWorkspace(workspace);
+    socket.on("workspace:invited", onInvited);
+    return () => { socket.off("workspace:invited", onInvited); };
+  }, [status, addWorkspace]);
 
   if (status !== "authenticated") {
     return (

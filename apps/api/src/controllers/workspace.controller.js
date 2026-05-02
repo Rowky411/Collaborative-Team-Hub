@@ -155,6 +155,25 @@ export async function inviteMember(req, res) {
   const flat = flattenMember(member);
   getIo()?.to(`workspace:${workspaceId}`).emit('workspace:member_added', { member: flat });
 
+  // Notify invited user's personal room so their workspace list updates in real-time
+  const workspace = await prisma.workspace.findUnique({
+    where: { id: workspaceId },
+    include: { _count: { select: { members: true } } },
+  });
+  if (workspace) {
+    getIo()?.to(`user:${user.id}`).emit('workspace:invited', {
+      workspace: {
+        id: workspace.id,
+        name: workspace.name,
+        description: workspace.description,
+        accentColor: workspace.accentColor,
+        createdAt: workspace.createdAt,
+        memberCount: workspace._count.members,
+        role,
+      },
+    });
+  }
+
   res.json({ data: { status: 'added', member: flat } });
 }
 

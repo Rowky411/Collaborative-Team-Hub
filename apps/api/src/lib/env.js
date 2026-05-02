@@ -14,7 +14,7 @@ for (const key of required) {
 
 export const env = {
   NODE_ENV: process.env.NODE_ENV || 'development',
-  PORT: Number(process.env.API_PORT || 4000),
+  PORT: Number(process.env.PORT || process.env.API_PORT || 4000),
   WEB_ORIGIN: process.env.WEB_ORIGIN || 'http://localhost:3000',
   DATABASE_URL: process.env.DATABASE_URL,
   JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET,

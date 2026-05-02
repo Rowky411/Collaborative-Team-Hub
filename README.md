@@ -1,109 +1,246 @@
 # Collaborative Team Hub
 
-Monorepo for the Collaborative Team Hub assignment. See `SPEC.md` for the full technical specification.
+A full-stack monorepo app for team collaboration — workspaces, goals, kanban boards, announcements, analytics, and real-time updates.
 
-## Stack
+## Table of Contents
 
-- **Monorepo:** Turborepo + pnpm workspaces
-- **Web:** Next.js 16 (App Router, JS) + Tailwind 4 + Zustand + react-hook-form
-- **API:** Node 20 + Express 4 + Prisma 5 + PostgreSQL 16
-- **Realtime:** Socket.io (workspace + user rooms)
-- **Auth:** JWT dual-token in httpOnly cookies (15m access / 7d refresh, with rotation)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Local Setup](#local-setup)
+- [Environment Variables](#environment-variables)
+- [Development](#development)
+- [Deployment (Railway)](#deployment-railway)
+- [Demo Credentials](#demo-credentials)
+- [Architecture Notes](#architecture-notes)
+- [Known Limitations](#known-limitations)
 
-## Quick start
+---
 
-```bash
-# 1. Install dependencies (one time)
-pnpm install
+## Tech Stack
 
-# 2. Start local Postgres in Docker
-docker compose up -d postgres
+| Layer | Technologies |
+|---|---|
+| **Frontend** | Next.js 14 (App Router), Zustand, Tailwind CSS, react-hook-form, axios, socket.io-client, @hello-pangea/dnd |
+| **Backend** | Node.js, Express, Prisma, PostgreSQL, Socket.io, JWT (httpOnly cookies), bcryptjs, Cloudinary, multer |
+| **Package Manager** | pnpm workspaces |
 
-# 3. Apply migrations + seed demo data (one time)
-pnpm --filter api exec prisma migrate dev
-pnpm --filter api exec prisma db seed
+---
 
-# 4. Run both apps in parallel
-pnpm dev
-```
-
-- Web: http://localhost:3000
-- API: http://localhost:4000
-- API health: http://localhost:4000/api/health
-
-### Seeded demo account
+## Project Structure
 
 ```
-email:    demo@team-hub.dev
-password: demopassword
-```
-
-## Project layout
-
-```
-.
+Collaborative-Team-Hub/
 ├── apps/
-│   ├── api/                  Express + Prisma backend
+│   ├── api/                  # Express + Prisma backend (port 4000)
 │   │   ├── prisma/
 │   │   │   ├── schema.prisma
 │   │   │   └── seed.js
 │   │   └── src/
-│   │       ├── controllers/  Route handlers (auth.controller.js, …)
-│   │       ├── middleware/   authenticate, errorHandler, validate
-│   │       ├── routes/       Express routers
-│   │       ├── lib/          prisma, env, tokens, cookies, upload, errors
-│   │       ├── app.js        Express app factory
-│   │       └── server.js     HTTP + Socket.io entry point
-│   └── web/                  Next.js 16 App Router frontend
+│   │       ├── controllers/  # Route handlers
+│   │       ├── middleware/   # authenticate, errorHandler, validate
+│   │       ├── routes/       # Express routers
+│   │       ├── lib/          # prisma, tokens, cookies, upload, errors
+│   │       ├── app.js
+│   │       └── index.js      # HTTP + Socket.io entry point
+│   └── web/                  # Next.js 14 App Router frontend (port 3000)
 │       ├── app/
-│       │   ├── (auth)/       login, register
-│       │   ├── (app)/        authenticated routes (workspaces, profile)
-│       │   └── layout.js
-│       ├── components/       UI primitives + AuthGate
-│       ├── lib/
-│       │   ├── apiClient.js  Axios + 401 auto-refresh interceptor
-│       │   └── stores/       Zustand stores (authStore)
-│       └── middleware.js     Route protection (cookie presence check)
-├── packages/config/          Shared ESLint + Prettier presets
-├── docker-compose.yml        Local Postgres
+│       │   ├── (auth)/       # login, register
+│       │   └── (app)/        # authenticated routes
+│       ├── components/
+│       └── lib/
+│           ├── apiClient.js  # Axios + 401 auto-refresh interceptor
+│           └── stores/       # Zustand stores
+├── packages/                 # Shared configs (ESLint, Prettier)
+├── docker-compose.yml        # Local Postgres
 ├── turbo.json
 ├── pnpm-workspace.yaml
-├── SPEC.md                   Full technical specification
-└── .env.example              Copy to .env (already populated for local dev)
+└── .env.example
 ```
 
-## Useful commands
+---
+
+## Features
+
+- **Auth** — Register, login, logout, silent token refresh. JWT access + refresh tokens in httpOnly cookies.
+- **Workspaces** — Create workspaces, invite members, manage roles (ADMIN / MEMBER).
+- **Goals** — Goals with milestones and a per-goal activity feed.
+- **Action Items** — Kanban board (drag-and-drop) and list view. File attachments via Cloudinary.
+- **Announcements** — Rich text posts with emoji reactions, comments, and @mentions.
+- **Analytics Dashboard** — Workspace-level metrics and charts.
+- **Audit Log** — Chronological record of all workspace mutations.
+- **Offline Mode** — Queued operations sync automatically on reconnect.
+- **Real-time** — All mutations broadcast to workspace members via Socket.io.
+- **File Uploads** — Profile avatars and action item attachments stored in Cloudinary.
+
+---
+
+## Prerequisites
+
+- Node.js 18+
+- pnpm 8+
+- PostgreSQL (local instance, Docker, or Railway)
+- Cloudinary account (optional — falls back to local disk if not configured)
+
+---
+
+## Local Setup
+
+**1. Clone and install**
 
 ```bash
-# DB
-pnpm db:migrate           # Create + apply a new migration
-pnpm db:generate          # Regenerate Prisma client
-pnpm db:seed              # Re-seed
-pnpm db:studio            # Open Prisma Studio
+git clone <repo-url>
+cd Collaborative-Team-Hub
+pnpm install
+```
 
-# Per-app
-pnpm --filter api dev     # API only (http://localhost:4000)
-pnpm --filter web dev     # Web only (http://localhost:3000)
+**2. Start local Postgres via Docker**
 
-# Build
+```bash
+docker compose up -d postgres
+```
+
+**3. Configure the API**
+
+```bash
+cd apps/api
+cp ../../.env.example .env
+# Edit .env and fill in all required variables (see below)
+```
+
+**4. Run database migrations and seed**
+
+```bash
+npx prisma migrate dev
+npx prisma db seed
+```
+
+**5. Configure the web app**
+
+Create `apps/web/.env.local` and add the variables listed in [Environment Variables](#environment-variables).
+
+**6. Start the dev servers (from repo root)**
+
+```bash
+cd ../..
+pnpm dev
+```
+
+- Frontend: http://localhost:3000
+- Backend: http://localhost:4000
+- API health: http://localhost:4000/api/health
+
+---
+
+## Environment Variables
+
+### `apps/api/.env`
+
+```env
+DATABASE_URL=postgresql://...
+JWT_ACCESS_SECRET=<random 64-char hex>
+JWT_REFRESH_SECRET=<random 64-char hex>
+WEB_ORIGIN=http://localhost:3000
+PORT=4000
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+```
+
+Generate secrets with:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+### `apps/web/.env.local`
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:4000
+NEXT_PUBLIC_WS_URL=http://localhost:4000
+```
+
+---
+
+## Development
+
+```bash
+# All apps in parallel (from root)
+pnpm dev
+
+# Individual apps
+pnpm --filter api dev
+pnpm --filter web dev
+
+# Database helpers
+pnpm db:migrate      # Create + apply a new migration
+pnpm db:generate     # Regenerate Prisma client
+pnpm db:seed         # Re-seed demo data
+pnpm db:studio       # Open Prisma Studio
+
+# Build all
 pnpm build
 ```
 
-## Phase 1 implementation status
+---
 
-All Phase 1 setup steps from `SPEC.md` §9 are complete:
+## Deployment (Railway)
 
-- [x] Monorepo scaffold (Turborepo + pnpm workspaces)
-- [x] Next.js web app
-- [x] Express API + all backend deps
-- [x] Local Postgres via Docker Compose (port 5433 to avoid native Postgres collision)
-- [x] Full Prisma schema (13 models, all indexes from SPEC §3.2 / §3.3)
-- [x] Auth controllers: register, login, refresh, logout, me, profile, avatar
-- [x] `authenticate` middleware + `validate` middleware + global error handler
-- [x] `/login`, `/register`, `/profile`, `/workspaces` (placeholder) pages
-- [x] Zustand `authStore` + Axios `apiClient` with 401 auto-refresh
-- [x] Next.js `middleware.js` for route protection
-- [x] Profile page with avatar upload (Cloudinary if configured, else local disk fallback served from `/uploads`)
-- [x] Seed script (1 demo user + 1 workspace, idempotent)
+1. Create a new Railway project.
+2. Add a **PostgreSQL** plugin — copy the generated `DATABASE_URL`.
+3. Add the **api** service:
+   - Root directory: `apps/api`
+   - Build command: `npx prisma generate`
+   - Start command: `node src/index.js`
+4. Add the **web** service:
+   - Root directory: `apps/web`
+   - Build command: `pnpm build`
+   - Start command: `pnpm start`
+5. Set all environment variables from the [Environment Variables](#environment-variables) section in the Railway dashboard. Point `WEB_ORIGIN`, `NEXT_PUBLIC_API_URL`, and `NEXT_PUBLIC_WS_URL` to the Railway-assigned public URLs.
+6. Open a shell on the **api** service and run:
+   ```bash
+   npx prisma migrate deploy
+   node prisma/seed.js
+   ```
 
-Next up: Phase 2 (workspaces CRUD + Socket.io presence). See `SPEC.md` §9.
+---
+
+## Demo Credentials
+
+All demo accounts use the password `demopassword`.
+
+| Email | Role |
+|---|---|
+| demo@team-hub.dev | Workspace Admin |
+| alice@team-hub.dev | Member |
+| bob@team-hub.dev | Member |
+| carol@team-hub.dev | Member |
+
+---
+
+## Architecture Notes
+
+**Auth**
+Dual-token strategy: 15-minute access token + 7-day refresh token, both stored in httpOnly cookies. An Axios interceptor catches 401 responses, silently calls `/auth/refresh`, and retries the original request.
+
+**Real-time**
+Single Socket.io namespace with workspace-scoped rooms (`workspace:{id}`). Every API mutation emits a corresponding event; connected clients update their Zustand stores via event handlers.
+
+**Drag-and-drop**
+`@hello-pangea/dnd` with optimistic reordering on the Kanban board. A snapshot of the previous order is captured before the API call and restored on failure.
+
+**Offline mode**
+Zustand `persist` middleware maintains an offline queue store. While offline, mutations are enqueued. On reconnect, queued operations replay in order against the live API.
+
+**File uploads**
+Cloudinary handles profile avatars (image only, 4 MB limit) and action item attachments (any file type, 10 MB limit). If Cloudinary credentials are absent, uploads fall back to local disk storage served from `/uploads`.
+
+---
+
+## Known Limitations
+
+- File uploads larger than 8 MB may time out on slow connections.
+- On Windows, Prisma client regeneration after a migration may fail with `EPERM` while the dev server is running. Stop the server, run `npx prisma generate`, then restart.
+- The offline queue replays queued operations once on reconnect but does not retry them indefinitely if they fail again.
+- There is no email delivery. The invite flow requires manually sharing login credentials with new members.

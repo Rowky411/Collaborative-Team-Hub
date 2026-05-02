@@ -11,6 +11,9 @@ import { useAnnouncementStore } from "../../../../lib/stores/announcementStore";
 import { useNotificationStore } from "../../../../lib/stores/notificationStore";
 import { getSocket } from "../../../../lib/socket";
 import { WorkspaceSwitcher } from "../../../../components/workspace/WorkspaceSwitcher";
+import { OfflineBanner } from "../../../../components/OfflineBanner";
+import { useOnlineStatus } from "../../../../lib/hooks/useOnlineStatus";
+import { useOfflineQueueStore } from "../../../../lib/stores/offlineQueueStore";
 
 const NAV = [
   { href: "", label: "Overview" },
@@ -57,6 +60,9 @@ export default function WorkspaceShellLayout({ children }) {
   const fetchNotifications  = useNotificationStore((s) => s.fetch);
   const addNotification     = useNotificationStore((s) => s.addNotification);
 
+  const online = useOnlineStatus();
+  const drainQueue = useOfflineQueueStore((s) => s.drain);
+
   const setOnline = usePresenceStore((s) => s.setOnline);
   const setOffline = usePresenceStore((s) => s.setOffline);
   const setSnapshot = usePresenceStore((s) => s.setSnapshot);
@@ -66,6 +72,11 @@ export default function WorkspaceShellLayout({ children }) {
     fetchWorkspaces();
     fetchNotifications();
   }, [fetchWorkspaces, fetchNotifications]);
+
+  // Drain write queue on reconnect
+  useEffect(() => {
+    if (online) drainQueue();
+  }, [online, drainQueue]);
 
   useEffect(() => {
     if (!workspaceId) return;
@@ -207,6 +218,7 @@ export default function WorkspaceShellLayout({ children }) {
     <div className="grid gap-6 md:grid-cols-[240px_1fr]" style={accentStyle}>
       <aside className="flex flex-col gap-4">
         <WorkspaceSwitcher currentId={workspaceId} />
+        <OfflineBanner />
         <nav className="flex flex-col gap-1 text-sm">
           {NAV.filter((item) => !item.adminOnly || isAdmin).map((item) => {
             const href = `${base}${item.href}`;

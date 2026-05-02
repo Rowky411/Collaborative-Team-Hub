@@ -1,70 +1,415 @@
 "use client";
 
+import Link from "next/link";
+import { useForm } from "react-hook-form";
 import { useWorkspaceStore } from "../../../../lib/stores/workspaceStore";
 import { usePresenceStore } from "../../../../lib/stores/presenceStore";
+import { useGoalStore } from "../../../../lib/stores/goalStore";
+import { useActionItemStore } from "../../../../lib/stores/actionItemStore";
+import { useAnnouncementStore } from "../../../../lib/stores/announcementStore";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { Avatar, ProgressRing, ProgressBar, OnlineDot, StatusBadge, Badge } from "../../../../components/ui/flux";
+import { Modal } from "../../../../components/Modal";
+import { FormField, TextInput, PrimaryButton } from "../../../../components/ui/FormField";
+import { apiError } from "../../../../lib/apiClient";
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function timeAgo(iso) {
+  if (!iso) return "";
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+// ─── Stat card ────────────────────────────────────────────────────────────────
+
+function StatCard({ pct, color, icon, value, label, sub, border }) {
+  return (
+    <div
+      className="flex items-center gap-3"
+      style={{
+        padding: "18px 22px",
+        borderRight: border ? "1px solid var(--border)" : "none",
+        flex: 1,
+      }}
+    >
+      <div style={{ position: "relative", flexShrink: 0 }}>
+        <ProgressRing pct={pct} size={50} stroke={4} color={color} trackOpacity={0.12} />
+        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15 }}>
+          {icon}
+        </div>
+      </div>
+      <div>
+        <div style={{ fontSize: 30, fontWeight: 800, color: "var(--text)", letterSpacing: "-0.04em", lineHeight: 1 }}>{value}</div>
+        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text)", marginTop: 2 }}>{label}</div>
+        <div style={{ fontSize: 11, color: "var(--muted)" }}>{sub}</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function WorkspaceOverviewPage() {
+  const { workspaceId } = useParams();
   const workspace = useWorkspaceStore((s) => s.currentWorkspace);
   const members = useWorkspaceStore((s) => s.members);
+  const inviteMember = useWorkspaceStore((s) => s.inviteMember);
   const onlineUserIds = usePresenceStore((s) => s.onlineUserIds);
+  const goals = useGoalStore((s) => s.goals);
+  const fetchGoals = useGoalStore((s) => s.fetchGoals);
+  const items = useActionItemStore((s) => s.items);
+  const fetchItems = useActionItemStore((s) => s.fetchItems);
+  const fetchAnnouncements = useAnnouncementStore((s) => s.fetchAnnouncements);
+  const announcements = useAnnouncementStore((s) => s.announcements);
+
+  const [showInvite, setShowInvite] = useState(false);
+
+  useEffect(() => {
+    if (workspaceId) {
+      fetchGoals(workspaceId);
+      fetchItems(workspaceId);
+      fetchAnnouncements(workspaceId);
+    }
+  }, [workspaceId, fetchGoals, fetchItems, fetchAnnouncements]);
 
   if (!workspace) return null;
 
+  const accentColor = workspace.accentColor || "#7c5cfc";
+
+  const activeGoals = goals.filter((g) => g.status === "IN_PROGRESS" || g.status === "NOT_STARTED");
+  const completedGoals = goals.filter((g) => g.status === "COMPLETED");
+  const overdueGoals = goals.filter((g) => g.status === "OVERDUE");
+  const recentItems = [...items].slice(0, 4);
+  const pinnedAnnouncement = announcements.find((a) => a.isPinned);
+
+  const goalPct = goals.length ? Math.round((completedGoals.length / goals.length) * 100) : 0;
+  const completedPct = goals.length ? Math.round((completedGoals.length / goals.length) * 100) : 0;
+  const overduePct = goals.length ? Math.round((overdueGoals.length / goals.length) * 100) : 0;
+
+  const isAdmin = workspace.role === "ADMIN";
+
   return (
-    <div>
-      <div className="flex items-center gap-3">
-        <span
-          className="h-4 w-4 rounded-full"
-          style={{ backgroundColor: workspace.accentColor }}
+    <div className="flex flex-col gap-5">
+
+      {/* ── Stat strip ───────────────────────────────────────────────── */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          background: "var(--card)",
+          border: "1px solid var(--border)",
+          borderRadius: 14,
+          overflow: "hidden",
+        }}
+      >
+        <StatCard
+          pct={goalPct}
+          color={accentColor}
+          icon="◎"
+          value={goals.length}
+          label="Total Goals"
+          sub={`${activeGoals.length} active`}
+          border
         />
-        <h1 className="text-2xl font-semibold">{workspace.name}</h1>
-        <span className="rounded-full bg-[color:var(--border)]/40 px-2 py-0.5 text-xs">
-          {workspace.role}
-        </span>
+        <StatCard
+          pct={completedPct}
+          color="#22c55e"
+          icon="✓"
+          value={completedGoals.length}
+          label="Completed"
+          sub="this week"
+          border
+        />
+        <StatCard
+          pct={overduePct}
+          color="#f97316"
+          icon="⚠"
+          value={overdueGoals.length}
+          label="Overdue"
+          sub="need attention"
+          border={false}
+        />
       </div>
-      {workspace.description ? (
-        <p className="mt-2 text-sm text-[color:var(--muted)]">{workspace.description}</p>
-      ) : null}
 
-      <section className="mt-8">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-[color:var(--muted)]">
-          Members ({members.length})
-        </h2>
-        <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-          {members.map((m) => {
-            const online = onlineUserIds.has(m.userId);
-            return (
-              <li
-                key={m.userId}
-                className="flex items-center gap-3 rounded-md border border-[color:var(--border)] px-3 py-2"
-              >
-                <div className="relative h-8 w-8 overflow-hidden rounded-full bg-[color:var(--border)]">
-                  {m.avatarUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={m.avatarUrl} alt={m.name} className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-[color:var(--muted)]">
-                      {m.name?.[0]?.toUpperCase()}
+      <div className="flex gap-5" style={{ minHeight: 0, alignItems: "flex-start" }}>
+
+        {/* ── Main column ──────────────────────────────────────────────── */}
+        <div className="flex-1 min-w-0 flex flex-col gap-4">
+
+          {/* Active Goals */}
+          {goals.length > 0 && (
+            <div style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14, overflow: "hidden" }}>
+              <div className="flex items-center justify-between" style={{ padding: "14px 18px", borderBottom: "1px solid var(--border)" }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>Active Goals</span>
+                <Link href={`/workspaces/${workspaceId}/goals`} style={{ fontSize: 12, color: accentColor, fontWeight: 600 }}>
+                  View all →
+                </Link>
+              </div>
+              {goals.slice(0, 5).map((g, i) => {
+                const pct = g.milestones?.length
+                  ? Math.round(g.milestones.reduce((s, m) => s + m.progress, 0) / g.milestones.length)
+                  : 0;
+                const statusLabel =
+                  g.status === "IN_PROGRESS" ? "In Progress"
+                  : g.status === "COMPLETED" ? "Completed"
+                  : g.status === "OVERDUE" ? "Overdue"
+                  : "Not Started";
+                return (
+                  <div
+                    key={g.id}
+                    className="flex items-center gap-3"
+                    style={{ padding: "12px 18px", borderBottom: i < Math.min(goals.length, 5) - 1 ? "1px solid var(--border)" : "none" }}
+                  >
+                    <ProgressRing pct={pct} size={34} stroke={3} color={accentColor} trackOpacity={0.1} />
+                    <div className="flex-1 min-w-0">
+                      <Link
+                        href={`/workspaces/${workspaceId}/goals/${g.id}`}
+                        style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                        className="hover:underline"
+                      >
+                        {g.title}
+                      </Link>
+                      <ProgressBar pct={pct} height={3} color={accentColor} animated />
                     </div>
-                  )}
-                  <span
-                    className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-[color:var(--background)] ${
-                      online ? "bg-emerald-500" : "bg-[color:var(--muted)]/40"
-                    }`}
-                    title={online ? "Online" : "Offline"}
-                  />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{m.name}</p>
-                  <p className="truncate text-xs text-[color:var(--muted)]">{m.email}</p>
-                </div>
-                <span className="text-xs text-[color:var(--muted)]">{m.role}</span>
-              </li>
-            );
-          })}
-        </ul>
-      </section>
+                    <span style={{ fontSize: 11, color: "var(--muted)", width: 30, textAlign: "right", flexShrink: 0 }}>{pct}%</span>
+                    <StatusBadge status={statusLabel} />
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
+          {/* Recent Action Items */}
+          {recentItems.length > 0 && (
+            <div style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14, overflow: "hidden" }}>
+              <div className="flex items-center justify-between" style={{ padding: "14px 18px", borderBottom: "1px solid var(--border)" }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>Recent Action Items</span>
+                <Link href={`/workspaces/${workspaceId}/action-items`} style={{ fontSize: 12, color: accentColor, fontWeight: 600 }}>
+                  View board →
+                </Link>
+              </div>
+              {recentItems.map((item, i) => (
+                <div
+                  key={item.id}
+                  className="flex items-center gap-3"
+                  style={{ padding: "11px 18px", borderBottom: i < recentItems.length - 1 ? "1px solid var(--border)" : "none" }}
+                >
+                  {/* Status circle */}
+                  <div style={{
+                    width: 16, height: 16, borderRadius: "50%", flexShrink: 0,
+                    border: `2px solid ${item.status === "DONE" ? "#22c55e" : "var(--border)"}`,
+                    background: item.status === "DONE" ? "#22c55e" : "transparent",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 8, color: "#fff",
+                  }}>
+                    {item.status === "DONE" ? "✓" : ""}
+                  </div>
+                  <span style={{ flex: 1, fontSize: 13, color: item.status === "DONE" ? "var(--muted)" : "var(--text)", textDecoration: item.status === "DONE" ? "line-through" : "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {item.title}
+                  </span>
+                  {/* Priority badge */}
+                  <Badge
+                    label={item.priority === "URGENT" ? "Urgent" : item.priority === "HIGH" ? "High" : item.priority === "LOW" ? "Low" : "Medium"}
+                    color={item.priority === "URGENT" || item.priority === "HIGH" ? "#ef4444" : item.priority === "LOW" ? "#22c55e" : "#f97316"}
+                    size="xs"
+                  />
+                  {item.assignee && <Avatar name={item.assignee.name || "?"} size={22} />}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {goals.length === 0 && items.length === 0 && (
+            <div style={{ background: "var(--card)", border: "1.5px dashed var(--border)", borderRadius: 14, padding: "40px 24px", textAlign: "center" }}>
+              <p style={{ fontSize: 13, color: "var(--muted)" }}>No goals or action items yet. Start by creating a goal.</p>
+              <Link href={`/workspaces/${workspaceId}/goals`} style={{ marginTop: 12, display: "inline-block", fontSize: 13, fontWeight: 600, color: accentColor }}>
+                Create first goal →
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* ── Right sidebar ────────────────────────────────────────────── */}
+        <div style={{ width: 200, flexShrink: 0, display: "flex", flexDirection: "column", gap: 12 }}>
+
+          {/* MEMBERS card */}
+          <div style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14, padding: "14px 16px" }}>
+            {/* Section label */}
+            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--muted)", letterSpacing: "0.09em", textTransform: "uppercase", marginBottom: 10 }}>
+              Members
+            </div>
+
+            {/* Member rows */}
+            <div className="flex flex-col" style={{ gap: 0 }}>
+              {members.map((m, i) => {
+                const online = onlineUserIds.has(m.userId);
+                const roleLabel = m.role === "ADMIN" ? "Admin" : "Member";
+                return (
+                  <div
+                    key={m.userId}
+                    className="flex items-center gap-2"
+                    style={{
+                      padding: "7px 0",
+                      borderTop: i > 0 ? "1px solid var(--border)" : "none",
+                    }}
+                  >
+                    {/* Avatar + online dot */}
+                    <div style={{ position: "relative", flexShrink: 0 }}>
+                      {m.avatarUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={m.avatarUrl} alt={m.name} style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} />
+                      ) : (
+                        <Avatar name={m.name || "?"} size={28} />
+                      )}
+                      <div style={{ position: "absolute", bottom: -1, right: -1 }}>
+                        <OnlineDot online={online} size={8} ring="var(--card)" />
+                      </div>
+                    </div>
+
+                    {/* Name + role */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {m.name}
+                      </div>
+                      <div style={{ fontSize: 10, color: "var(--muted)" }}>{roleLabel}</div>
+                    </div>
+
+                    {/* Online indicator dot (right side) */}
+                    <div style={{
+                      width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
+                      background: online ? "#22c55e" : "transparent",
+                    }} />
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Invite button */}
+            {isAdmin && (
+              <button
+                onClick={() => setShowInvite(true)}
+                style={{
+                  marginTop: 10,
+                  width: "100%",
+                  padding: "7px 0",
+                  borderRadius: 8,
+                  border: "1px solid var(--border)",
+                  background: "transparent",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "var(--text)",
+                  cursor: "pointer",
+                  transition: "background 0.15s",
+                }}
+                onMouseOver={(e) => (e.currentTarget.style.background = "color-mix(in srgb, var(--accent, #7c5cfc) 8%, transparent)")}
+                onMouseOut={(e) => (e.currentTarget.style.background = "transparent")}
+              >
+                + Invite member
+              </button>
+            )}
+          </div>
+
+          {/* PINNED announcement */}
+          {pinnedAnnouncement && (
+            <div style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14, padding: "14px 16px" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--muted)", letterSpacing: "0.09em", textTransform: "uppercase", marginBottom: 10 }}>
+                Pinned
+              </div>
+              <div style={{ borderLeft: `3px solid ${accentColor}`, paddingLeft: 10 }}>
+                <p style={{ fontSize: 12, fontWeight: 600, color: "var(--text)", lineHeight: 1.4, margin: 0 }}>
+                  {pinnedAnnouncement.title}
+                </p>
+                <p style={{ fontSize: 10, color: "var(--muted)", marginTop: 4 }}>
+                  {timeAgo(pinnedAnnouncement.createdAt)}
+                  {pinnedAnnouncement.reactions?.length > 0 && ` · ${pinnedAnnouncement.reactions.length} reactions`}
+                </p>
+              </div>
+            </div>
+          )}
+
+        </div>
+      </div>
+
+      <InviteModal
+        open={showInvite}
+        onClose={() => setShowInvite(false)}
+        onInvite={(payload) => inviteMember(workspaceId, payload)}
+      />
     </div>
+  );
+}
+
+function InviteModal({ open, onClose, onInvite }) {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm({ defaultValues: { email: "", role: "MEMBER" } });
+  const [serverError, setServerError] = useState(null);
+
+  const close = () => {
+    reset();
+    setServerError(null);
+    onClose();
+  };
+
+  const onSubmit = async (values) => {
+    setServerError(null);
+    try {
+      await onInvite(values);
+      reset();
+      onClose();
+    } catch (err) {
+      setServerError(apiError(err));
+    }
+  };
+
+  return (
+    <Modal open={open} onClose={close} title="Invite member">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+        <FormField label="Email" error={errors.email?.message}>
+          <TextInput
+            register={register}
+            name="email"
+            type="email"
+            {...register("email", {
+              required: "Email is required",
+              pattern: { value: /.+@.+\..+/, message: "Invalid email" },
+            })}
+            placeholder="teammate@example.com"
+          />
+        </FormField>
+        <FormField label="Role">
+          <select
+            {...register("role")}
+            className="rounded-md border border-[color:var(--border)] bg-transparent px-3 py-2 text-sm"
+          >
+            <option value="MEMBER">Member</option>
+            <option value="ADMIN">Admin</option>
+          </select>
+        </FormField>
+        {serverError ? <p className="text-sm text-red-600">{serverError}</p> : null}
+        <div className="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={close}
+            className="rounded-md px-3 py-2 text-sm hover:bg-[color:var(--border)]/30"
+          >
+            Cancel
+          </button>
+          <PrimaryButton type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Inviting…" : "Send invite"}
+          </PrimaryButton>
+        </div>
+      </form>
+    </Modal>
   );
 }

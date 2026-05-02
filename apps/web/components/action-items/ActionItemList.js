@@ -35,7 +35,7 @@ function Th({ children, onClick, sorted }) {
   );
 }
 
-export function ActionItemList({ items, onRowClick }) {
+export function ActionItemList({ items, onRowClick, onRowEdit }) {
   const [sortKey, setSortKey] = useState("status");
   const [sortDir, setSortDir] = useState("asc");
 
@@ -100,10 +100,19 @@ export function ActionItemList({ items, onRowClick }) {
               <tr
                 key={item.id}
                 onClick={() => onRowClick?.(item)}
-                className="cursor-pointer transition-colors hover:bg-[color:var(--accent)]/5"
+                className="group cursor-pointer transition-colors hover:bg-[color:var(--accent)]/5"
               >
                 <td className="max-w-xs truncate px-4 py-3 font-medium text-[color:var(--foreground)]">
-                  {item.title}
+                  <div className="flex items-center gap-2">
+                    <span className="truncate">{item.title}</span>
+                    {onRowEdit && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onRowEdit(item); }}
+                        className="ml-auto shrink-0 rounded px-1.5 py-0.5 text-xs text-[color:var(--muted)] opacity-0 group-hover:opacity-100 hover:bg-[color:var(--border)] transition"
+                        title="Edit"
+                      >✏</button>
+                    )}
+                  </div>
                 </td>
                 <td className="px-4 py-3">
                   <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_CLS[item.status]}`}>

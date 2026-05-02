@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect } from "react";
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useWorkspaceStore } from "../../../../lib/stores/workspaceStore";
 import { usePresenceStore } from "../../../../lib/stores/presenceStore";
 import { useGoalStore } from "../../../../lib/stores/goalStore";
@@ -10,24 +9,13 @@ import { useActionItemStore } from "../../../../lib/stores/actionItemStore";
 import { useAnnouncementStore } from "../../../../lib/stores/announcementStore";
 import { useNotificationStore } from "../../../../lib/stores/notificationStore";
 import { getSocket } from "../../../../lib/socket";
-import { WorkspaceSwitcher } from "../../../../components/workspace/WorkspaceSwitcher";
 import { OfflineBanner } from "../../../../components/OfflineBanner";
+import { WorkspaceCover } from "../../../../components/layout/WorkspaceCover";
 import { useOnlineStatus } from "../../../../lib/hooks/useOnlineStatus";
 import { useOfflineQueueStore } from "../../../../lib/stores/offlineQueueStore";
 
-const NAV = [
-  { href: "", label: "Overview" },
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/goals", label: "Goals" },
-  { href: "/announcements", label: "Announcements" },
-  { href: "/action-items", label: "Action items" },
-  { href: "/settings", label: "Settings" },
-  { href: "/settings/audit-log", label: "Audit Log", adminOnly: true },
-];
-
 export default function WorkspaceShellLayout({ children }) {
   const router = useRouter();
-  const pathname = usePathname();
   const { workspaceId } = useParams();
 
   const workspace = useWorkspaceStore((s) => s.currentWorkspace);
@@ -211,42 +199,14 @@ export default function WorkspaceShellLayout({ children }) {
   if (!workspace) return null;
 
   const accentStyle = { "--accent": workspace.accentColor };
-  const base = `/workspaces/${workspaceId}`;
-  const isAdmin = workspace.role === "ADMIN";
 
   return (
-    <div className="grid gap-6 md:grid-cols-[240px_1fr]" style={accentStyle}>
-      <aside className="flex flex-col gap-4">
-        <WorkspaceSwitcher currentId={workspaceId} />
+    <div className="flex flex-col flex-1 min-h-0" style={accentStyle}>
+      <WorkspaceCover workspace={workspace} />
+      <div className="px-6 pt-3">
         <OfflineBanner />
-        <nav className="flex flex-col gap-1 text-sm">
-          {NAV.filter((item) => !item.adminOnly || isAdmin).map((item) => {
-            const href = `${base}${item.href}`;
-            const isActive =
-              item.href === ""
-                ? pathname === base
-                : pathname === href || (item.href !== "/settings" && pathname.startsWith(href));
-            const cls = `rounded-md px-3 py-2 transition ${
-              isActive
-                ? "bg-[color:var(--accent)]/10 text-[color:var(--accent)] font-medium"
-                : "text-[color:var(--foreground)] hover:bg-[color:var(--border)]/30"
-            } ${item.disabled ? "cursor-not-allowed opacity-40" : ""}`;
-            if (item.disabled) {
-              return (
-                <span key={item.label} className={cls}>
-                  {item.label}
-                </span>
-              );
-            }
-            return (
-              <Link key={item.label} href={href} className={cls}>
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-      </aside>
-      <main>{children}</main>
+      </div>
+      <main className="flex-1 min-h-0 overflow-auto px-7 py-5 screen-enter">{children}</main>
     </div>
   );
 }

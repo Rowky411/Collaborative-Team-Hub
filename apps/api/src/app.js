@@ -3,7 +3,9 @@ import path from 'node:path';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
+import swaggerUi from 'swagger-ui-express';
 import { env } from './lib/env.js';
+import { swaggerSpec } from './lib/swagger.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import authRoutes from './routes/auth.routes.js';
 import workspaceRoutes from './routes/workspace.routes.js';
@@ -13,6 +15,7 @@ import announcementRoutes from './routes/announcement.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
 import analyticsRoutes from './routes/analytics.routes.js';
 import auditLogRoutes from './routes/auditLog.routes.js';
+import uploadRoutes from './routes/upload.routes.js';
 
 export function createApp() {
   const app = express();
@@ -31,6 +34,9 @@ export function createApp() {
     res.json({ data: { status: 'ok', uptime: process.uptime() } });
   });
 
+  app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, { customSiteTitle: 'Team Hub API' }));
+  app.get('/api/docs.json', (_req, res) => res.json(swaggerSpec));
+
   app.use(
     '/uploads',
     express.static(path.resolve(process.cwd(), 'uploads'), { maxAge: '7d' }),
@@ -44,6 +50,7 @@ export function createApp() {
   app.use('/api/notifications', notificationRoutes);
   app.use('/api/workspaces/:workspaceId/analytics', analyticsRoutes);
   app.use('/api/workspaces/:workspaceId/audit-log', auditLogRoutes);
+  app.use('/api/upload', uploadRoutes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

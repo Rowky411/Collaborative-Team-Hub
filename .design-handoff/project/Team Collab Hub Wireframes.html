@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Team Collab Hub — Design Wireframes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: #0a0a0f; color: #e8e8f0; overflow: hidden; }
+  .dc-host { width: 100vw; height: 100vh; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel">
+
+// ─── SHARED UTILS ──────────────────────────────────────────────────────────────
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "theme": "dark",
+  "direction": "all"
+}/*EDITMODE-END*/;
+
+// ─── SHARED TOKENS ─────────────────────────────────────────────────────────────
+const tok = {
+  purple: '#7c5cfc',
+  purpleLight: '#a78bfa',
+  purpleDim: 'rgba(124,92,252,0.15)',
+
+  // dark theme
+  dkBg: '#0d0d14',
+  dkSurface: '#13131e',
+  dkCard: '#1a1a2a',
+  dkBorder: 'rgba(255,255,255,0.07)',
+  dkText: '#e8e8f0',
+  dkMuted: '#6b6b85',
+  dkSubtle: '#3a3a50',
+
+  // light theme
+  ltBg: '#f5f5f7',
+  ltSurface: '#ffffff',
+  ltCard: '#ffffff',
+  ltBorder: 'rgba(0,0,0,0.07)',
+  ltText: '#111118',
+  ltMuted: '#8888a0',
+  ltSubtle: '#dddde8',
+};
+
+function useTheme(theme) {
+  const isDark = theme === 'dark';
+  return {
+    isDark,
+    bg: isDark ? tok.dkBg : tok.ltBg,
+    surface: isDark ? tok.dkSurface : tok.ltSurface,
+    card: isDark ? tok.dkCard : tok.ltCard,
+    border: isDark ? tok.dkBorder : tok.ltBorder,
+    text: isDark ? tok.dkText : tok.ltText,
+    muted: isDark ? tok.dkMuted : tok.ltMuted,
+    subtle: isDark ? tok.dkSubtle : tok.ltSubtle,
+  };
+}
+
+// ─── SHARED MICRO COMPONENTS ───────────────────────────────────────────────────
+function Avatar({ name, size = 28, color = tok.purple }) {
+  const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: '50%',
+      background: color, display: 'flex', alignItems: 'center',
+      justifyContent: 'center', fontSize: size * 0.38, fontWeight: 600,
+      color: '#fff', flexShrink: 0, fontFamily: 'DM Sans',
+    }}>{initials}</div>
+  );
+}
+
+function Badge({ label, color = tok.purple, bg }) {
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 4,
+      padding: '2px 8px', borderRadius: 999,
+      background: bg || `${color}22`, color: color,
+      fontSize: 11, fontWeight: 600, fontFamily: 'DM Mono, monospace',
+      letterSpacing: '0.02em', whiteSpace: 'nowrap',
+    }}>{label}</span>
+  );
+}
+
+function ProgressRing({ pct = 0, size = 48, stroke = 4, color = tok.purple, trackColor = 'rgba(255,255,255,0.08)' }) {
+  const r = (size - stroke) / 2;
+  const circ = 2 * Math.PI * r;
+  const dash = (pct / 100) * circ;
+  return (
+    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}>
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={trackColor} strokeWidth={stroke} />
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={stroke}
+        strokeDasharray={`${dash} ${circ - dash}`} strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ProgressBar({ pct = 0, height = 4, color = tok.purple, trackColor = 'rgba(255,255,255,0.08)' }) {
+  return (
+    <div style={{ background: trackColor, borderRadius: 999, height, overflow: 'hidden', width: '100%' }}>
+      <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 999, transition: 'width 0.4s ease' }} />
+    </div>
+  );
+}
+
+function OnlineDot({ color = '#22c55e', size = 8 }) {
+  return <div style={{ width: size, height: size, borderRadius: '50%', background: color, flexShrink: 0 }} />;
+}
+
+function HatchFill({ width, height, label, style = {} }) {
+  return (
+    <div style={{
+      width, height, borderRadius: 8, position: 'relative', overflow: 'hidden',
+      background: 'repeating-linear-gradient(45deg, rgba(120,120,160,0.06) 0px, rgba(120,120,160,0.06) 1px, transparent 1px, transparent 8px)',
+      border: '1.5px dashed rgba(120,120,180,0.18)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      ...style,
+    }}>
+      {label && <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: 'rgba(160,160,200,0.5)', textAlign: 'center', padding: 8 }}>{label}</span>}
+    </div>
+  );
+}
+
+// ─── DIRECTION A: "ORBITAL" ────────────────────────────────────────────────────
+// Slim icon rail, floating panels, Notion-calm, dark grid texture
+
+function OrbitalIconRail({ t }) {
+  const icons = ['⊞','◎','◈','◻','⊛'];
+  const labels = ['Home','Goals','Announce','Actions','Settings'];
+  return (
+    <div style={{
+      width: 52, flexShrink: 0, background: t.surface,
+      borderRight: `1px solid ${t.border}`,
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      paddingTop: 16, gap: 2,
+    }}>
+      {/* Logo mark */}
+      <div style={{
+        width: 32, height: 32, borderRadius: 8, background: tok.purple,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 14, color: '#fff', fontWeight: 700, marginBottom: 20,
+      }}>T</div>
+      {icons.map((ic, i) => (
+        <div key={i} title={labels[i]} style={{
+          width: 36, height: 36, borderRadius: 8, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 16, color: i === 1 ? tok.purple : t.muted,
+          background: i === 1 ? tok.purpleDim : 'transparent',
+          transition: 'all 0.15s',
+        }}>{ic}</div>
+      ))}
+      <div style={{ flex: 1 }} />
+      <Avatar name="Demo User" size={28} />
+      <div style={{ height: 16 }} />
+    </div>
+  );
+}
+
+function OrbitalWorkspacePicker({ t }) {
+  const workspaces = [
+    { name: 'Demo Workspace', desc: 'A starter workspace for the demo account', members: 3, role: 'ADMIN', color: tok.purple, active: true },
+    { name: 'Marketing', desc: 'Phase 2 test campaign planning', members: 1, role: 'ADMIN', color: '#22c55e', active: false },
+    { name: 'Test 2', desc: 'A test workspace', members: 2, role: 'MEMBER', color: '#f97316', active: false },
+  ];
+  return (
+    <div style={{ display: 'flex', height: '100%', background: t.bg }}>
+      {/* slim icon rail */}
+      <div style={{
+        width: 52, flexShrink: 0, background: t.surface,
+        borderRight: `1px solid ${t.border}`,
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        paddingTop: 16, gap: 2,
+      }}>
+        <div style={{ width: 32, height: 32, borderRadius: 8, background: tok.purple, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#fff', fontWeight: 700, marginBottom: 20 }}>T</div>
+        {['⊞','◎','◈','◻'].map((ic, i) => (
+          <div key={i} style={{ width: 36, height: 36, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, color: t.muted }}>{ic}</div>
+        ))}
+        <div style={{ flex: 1 }} />
+        <Avatar name="D U" size={28} />
+        <div style={{ height: 12 }} />
+      </div>
+      {/* main content */}
+      <div style={{ flex: 1, padding: '48px 56px', overflow: 'auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 36 }}>
+          <div>
+            <div style={{ fontSize: 26, fontWeight: 700, color: t.text, letterSpacing: '-0.02em', marginBottom: 6 }}>Your workspaces</div>
+            <div style={{ fontSize: 13, color: t.muted }}>Select a workspace or create a new one</div>
+          </div>
+          <button style={{
+            padding: '9px 18px', borderRadius: 8, background: tok.purple,
+            color: '#fff', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: 'DM Sans',
+            display: 'flex', alignItems: 'center', gap: 6,
+          }}>
+            <span style={{ fontSize: 16, fontWeight: 300 }}>+</span> New workspace
+          </button>
+        </div>
+        {/* search bar */}
+        <div style={{
+          width: 280, height: 36, borderRadius: 8,
+          background: t.card, border: `1px solid ${t.border}`,
+          display: 'flex', alignItems: 'center', gap: 8, padding: '0 12px',
+          marginBottom: 28, color: t.muted, fontSize: 13,
+        }}>
+          <span style={{ fontSize: 14 }}>⌕</span>
+          <span>Search workspaces…</span>
+        </div>
+        {/* workspace grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+          {workspaces.map((ws, i) => (
+            <div key={i} style={{
+              background: t.card, border: `1px solid ${ws.active ? ws.color + '40' : t.border}`,
+              borderRadius: 12, padding: '20px 20px 18px', cursor: 'pointer',
+              transition: 'all 0.15s', position: 'relative', overflow: 'hidden',
+            }}>
+              {/* color accent bar */}
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: ws.color, borderRadius: '12px 12px 0 0', opacity: ws.active ? 1 : 0.35 }} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, marginTop: 4 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: ws.color + '22', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, color: ws.color }}>
+                    {ws.name[0]}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: t.text, letterSpacing: '-0.01em' }}>{ws.name}</div>
+                    <div style={{ fontSize: 11, color: t.muted, marginTop: 1 }}>{ws.members} members</div>
+                  </div>
+                </div>
+                <Badge label={ws.role} color={ws.role === 'ADMIN' ? tok.purple : t.muted} />
+              </div>
+              <div style={{ fontSize: 12, color: t.muted, lineHeight: 1.5, marginTop: 6 }}>{ws.desc}</div>
+            </div>
+          ))}
+          {/* Add new */}
+          <div style={{
+            background: 'transparent', border: `1.5px dashed ${t.subtle}`,
+            borderRadius: 12, padding: '20px 20px 18px', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            color: t.muted, fontSize: 13,
+          }}>
+            <span style={{ fontSize: 20, fontWeight: 300 }}>+</span>
+            <span>Create workspace</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OrbitalDashboard({ t }) {
+  const stats = [
+    { label: 'Total Goals', value: 8, sub: '3 in progress', icon: '◎' },
+    { label: 'Done this week', value: 4, sub: 'Action items', icon: '✓' },
+    { label: 'Overdue', value: 2, sub: 'Need attention', icon: '⊘', warn: true },
+    { label: 'Team online', value: 3, sub: '2 active now', icon: '●' },
+  ];
+  const members = [
+    { name: 'Demo User', role: 'Admin', online: true },
+    { name: 'Alice', role: 'Member', online: true },
+    { name: 'user1', role: 'Member', online: false },
+  ];
+  return (
+    <div style={{ display: 'flex', height: '100%', background: t.bg }}>
+      {/* icon rail */}
+      <div style={{ width: 52, flexShrink: 0, background: t.surface, borderRight: `1px solid ${t.border}`, display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 16, gap: 2 }}>
+        <div style={{ width: 32, height: 32, borderRadius: 8, background: tok.purple, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#fff', fontWeight: 700, marginBottom: 20 }}>T</div>
+        {['⊞','◎','◈','◻','⊛'].map((ic, i) => (
+          <div key={i} style={{ width: 36, height: 36, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, color: i === 0 ? tok.purple : t.muted, background: i === 0 ? tok.purpleDim : 'transparent' }}>{ic}</div>
+        ))}
+        <div style={{ flex: 1 }} />
+        <Avatar name="D U" size={28} />
+        <div style={{ height: 12 }} />
+      </div>
+      {/* main */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* top bar */}
+        <div style={{ height: 52, borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', padding: '0 24px', gap: 12, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 10, height: 10, borderRadius: '50%', background: tok.purple }} />
+            <span style={{ fontSize: 13, fontWeight: 600, color: t.text }}>Demo Workspace</span>
+          </div>
+          <div style={{ fontSize: 12, color: t.muted }}>›</div>
+          <div style={{ fontSize: 13, color: t.muted }}>Overview</div>
+          <div style={{ flex: 1 }} />
+          {/* online avatars */}
+          <div style={{ display: 'flex', gap: -4 }}>
+            {['D','A'].map((l, i) => (
+              <div key={i} style={{ width: 26, height: 26, borderRadius: '50%', background: [tok.purple, '#22c55e'][i], border: `2px solid ${t.bg}`, marginLeft: i > 0 ? -8 : 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#fff', position: 'relative', zIndex: 2 - i }}>{l}</div>
+            ))}
+          </div>
+          <span style={{ fontSize: 11, color: '#22c55e', fontFamily: 'DM Mono', fontWeight: 500 }}>2 online</span>
+        </div>
+        {/* body */}
+        <div style={{ flex: 1, padding: '28px 32px', overflow: 'auto', display: 'flex', gap: 24 }}>
+          {/* left col */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {/* workspace header */}
+            <div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: t.text, letterSpacing: '-0.02em', marginBottom: 4 }}>Demo Workspace</div>
+              <div style={{ fontSize: 13, color: t.muted }}>A starter workspace for the demo account</div>
+            </div>
+            {/* stats row */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+              {stats.map((s, i) => (
+                <div key={i} style={{
+                  background: t.card, border: `1px solid ${s.warn ? '#f9731622' : t.border}`,
+                  borderRadius: 10, padding: '14px 16px',
+                }}>
+                  <div style={{ fontSize: 11, color: s.warn ? '#f97316' : t.muted, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <span>{s.icon}</span> {s.label}
+                  </div>
+                  <div style={{ fontSize: 26, fontWeight: 700, color: s.warn ? '#f97316' : t.text, letterSpacing: '-0.03em', marginBottom: 2 }}>{s.value}</div>
+                  <div style={{ fontSize: 11, color: t.muted }}>{s.sub}</div>
+                </div>
+              ))}
+            </div>
+            {/* recent goals */}
+            <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: t.text }}>Active Goals</div>
+                <div style={{ fontSize: 12, color: tok.purple, cursor: 'pointer' }}>View all →</div>
+              </div>
+              {[
+                { name: 'Q2 Product Launch', pct: 65, owner: 'Demo User', due: 'May 13', status: 'In Progress' },
+                { name: 'Marketing Campaign', pct: 25, owner: 'Alice', due: 'May 9', status: 'In Progress' },
+                { name: 'Infra Migration', pct: 90, owner: 'Demo User', due: 'May 3', status: 'On Track' },
+              ].map((g, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '10px 0', borderTop: i > 0 ? `1px solid ${t.border}` : 'none' }}>
+                  <ProgressRing pct={g.pct} size={38} stroke={3} color={tok.purple} trackColor={t.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: t.text, marginBottom: 2 }}>{g.name}</div>
+                    <div style={{ fontSize: 11, color: t.muted }}>{g.owner} · Due {g.due}</div>
+                  </div>
+                  <Badge label={g.status} color={tok.purple} />
+                </div>
+              ))}
+            </div>
+            {/* announcements preview */}
+            <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: t.text, marginBottom: 14 }}>Recent Announcements</div>
+              <div style={{ display: 'flex', gap: 10, padding: '10px 12px', background: tok.purpleDim, borderRadius: 8 }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: tok.purple, marginTop: 5, flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: t.text, marginBottom: 2 }}>Team standup moved to 10am</div>
+                  <div style={{ fontSize: 11, color: t.muted }}>Admin · 2h ago · 4 reactions</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* right col */}
+          <div style={{ width: 220, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* members */}
+            <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: 16 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: t.text, marginBottom: 12 }}>Members (3)</div>
+              {members.map((m, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '6px 0', borderTop: i > 0 ? `1px solid ${t.border}` : 'none' }}>
+                  <div style={{ position: 'relative' }}>
+                    <Avatar name={m.name} size={26} color={[tok.purple, '#22c55e', '#f97316'][i]} />
+                    {m.online && <div style={{ position: 'absolute', bottom: 0, right: 0, width: 7, height: 7, borderRadius: '50%', background: '#22c55e', border: `1.5px solid ${t.card}` }} />}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: t.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</div>
+                    <div style={{ fontSize: 10, color: t.muted }}>{m.role}</div>
+                  </div>
+                </div>
+              ))}
+              <div style={{ marginTop: 10, padding: '7px 0', borderTop: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', gap: 6, color: tok.purple, fontSize: 12, cursor: 'pointer' }}>
+                <span>+ Invite member</span>
+              </div>
+            </div>
+            {/* quick actions */}
+            <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: 16 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: t.text, marginBottom: 10 }}>Quick actions</div>
+              {['New goal', 'Post announcement', 'Add action item'].map((a, i) => (
+                <div key={i} style={{ padding: '7px 10px', borderRadius: 7, cursor: 'pointer', fontSize: 12, color: t.muted, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                  <span style={{ color: tok.purple }}>+</span> {a}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OrbitalGoals({ t }) {
+  const goals = [
+    { name: 'Q2 Product Launch', desc: 'Deliver the full release', pct: 65, milestones: 3, owner: 'Demo User', due: 'May 13', status: 'In Progress' },
+    { name: 'Marketing Campaign', desc: 'Awareness push for Q2', pct: 25, milestones: 2, owner: 'Alice', due: 'May 9', status: 'In Progress' },
+    { name: 'Infra Migration', desc: 'Move to Railway fully', pct: 90, milestones: 4, owner: 'Demo User', due: 'May 3', status: 'On Track' },
+    { name: 'Hire 3 Engineers', desc: 'Backend and frontend roles', pct: 40, milestones: 2, owner: 'Alice', due: 'Jun 1', status: 'At Risk' },
+  ];
+  return (
+    <div style={{ display: 'flex', height: '100%', background: t.bg }}>
+      {/* icon rail */}
+      <div style={{ width: 52, flexShrink: 0, background: t.surface, borderRight: `1px solid ${t.border}`, display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 16, gap: 2 }}>
+        <div style={{ width: 32, height: 32, borderRadius: 8, background: tok.purple, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#fff', fontWeight: 700, marginBottom: 20 }}>T</div>
+        {['⊞','◎','◈','◻','⊛'].map((ic, i) => (
+          <div key={i} style={{ width: 36, height: 36, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, color: i === 1 ? tok.purple : t.muted, background: i === 1 ? tok.purpleDim : 'transparent' }}>{ic}</div>
+        ))}
+        <div style={{ flex: 1 }} />
+        <Avatar name="D U" size={28} />
+        <div style={{ height: 12 }} />
+      </div>
+      {/* main */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* header */}
+        <div style={{ height: 56, borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', padding: '0 28px', gap: 12, flexShrink: 0 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: t.text, letterSpacing: '-0.02em', flex: 1 }}>Goals</div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {/* filter pills */}
+            {['All','In Progress','On Track','At Risk'].map((f, i) => (
+              <div key={i} style={{ padding: '4px 12px', borderRadius: 999, background: i === 0 ? tok.purple : 'transparent', border: `1px solid ${i === 0 ? tok.purple : t.border}`, color: i === 0 ? '#fff' : t.muted, fontSize: 12, cursor: 'pointer' }}>{f}</div>
+            ))}
+            <div style={{ width: 1, height: 18, background: t.border }} />
+            <button style={{ padding: '6px 14px', borderRadius: 8, background: tok.purple, color: '#fff', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, fontFamily: 'DM Sans' }}>+ New Goal</button>
+          </div>
+        </div>
+        {/* goals list */}
+        <div style={{ flex: 1, padding: '20px 28px', overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {goals.map((g, i) => (
+            <div key={i} style={{
+              background: t.card, border: `1px solid ${t.border}`,
+              borderRadius: 12, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 20, cursor: 'pointer',
+            }}>
+              <ProgressRing pct={g.pct} size={44} stroke={4} color={tok.purple} trackColor={t.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: t.text, letterSpacing: '-0.01em' }}>{g.name}</div>
+                  <Badge label={g.status} color={g.status === 'At Risk' ? '#f97316' : g.status === 'On Track' ? '#22c55e' : tok.purple} />
+                </div>
+                <div style={{ fontSize: 12, color: t.muted }}>{g.desc}</div>
+                <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+                  <ProgressBar pct={g.pct} height={3} color={tok.purple} trackColor={t.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'} />
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: t.text, fontFamily: 'DM Mono', letterSpacing: '-0.02em' }}>{g.pct}%</div>
+                <div style={{ fontSize: 11, color: t.muted }}>{g.milestones} milestones</div>
+                <div style={{ fontSize: 11, color: t.muted }}>Due {g.due}</div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end', paddingLeft: 12, borderLeft: `1px solid ${t.border}` }}>
+                <Avatar name={g.owner} size={28} />
+                <div style={{ fontSize: 10, color: t.muted }}>{g.owner.split(' ')[0]}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── DIRECTION B: "STRATA" ─────────────────────────────────────────────────────
+// Wide sidebar, workspace color bleeds, bold section headers, tile-based layout
+
+function StrataSidebar({ t, wsColor = tok.purple }) {
+  const navItems = [
+    { label: 'Overview', icon: '⊞', active: false },
+    { label: 'Goals', icon: '◎', active: true },
+    { label: 'Announcements', icon: '◈', active: false },
+    { label: 'Action Items', icon: '◻', active: false },
+    { label: 'Settings', icon: '⊛', active: false },
+  ];
+  return (
+    <div style={{ width: 200, flexShrink: 0, background: t.surface, borderRight: `1px solid ${t.border}`, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      {/* workspace header with color bleed */}
+      <div style={{ background: wsColor + (t.isDark ? '28' : '14'), padding: '16px 16px 14px', borderBottom: `1px solid ${wsColor}30` }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 28, height: 28, borderRadius: 8, background: wsColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff' }}>D</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: t.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Demo Workspace</div>
+            <div style={{ fontSize: 10, color: t.muted }}>3 members online</div>
+          </div>
+          <div style={{ fontSize: 12, color: t.muted, cursor: 'pointer' }}>›</div>
+        </div>
+      </div>
+      {/* nav items */}
+      <div style={{ padding: '10px 8px', flex: 1 }}>
+        {navItems.map((item, i) => (
+          <div key={i} style={{
+            display: 'flex', alignItems: 'center', gap: 9,
+            padding: '7px 10px', borderRadius: 7, cursor: 'pointer', marginBottom: 1,
+            background: item.active ? wsColor + '22' : 'transparent',
+            color: item.active ? wsColor : t.muted, fontSize: 13,
+            fontWeight: item.active ? 600 : 400,
+          }}>
+            <span style={{ fontSize: 14 }}>{item.icon}</span>
+            <span>{item.label}</span>
+          </div>
+        ))}
+      </div>
+      {/* user row */}
+      <div style={{ padding: '12px 14px', borderTop: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', gap: 9 }}>
+        <div style={{ position: 'relative' }}>
+          <Avatar name="Demo User" size={26} />
+          <div style={{ position: 'absolute', bottom: 0, right: 0, width: 7, height: 7, borderRadius: '50%', background: '#22c55e', border: `1.5px solid ${t.surface}` }} />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 12, fontWeight: 500, color: t.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Demo User</div>
+          <div style={{ fontSize: 10, color: t.muted }}>Admin</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StrataWorkspacePicker({ t }) {
+  const wsList = [
+    { name: 'Demo Workspace', members: 3, role: 'ADMIN', color: tok.purple, goals: 8, initials: 'DW' },
+    { name: 'Marketing', members: 1, role: 'ADMIN', color: '#22c55e', goals: 3, initials: 'MK' },
+    { name: 'Test 2', members: 2, role: 'MEMBER', color: '#f97316', goals: 1, initials: 'T2' },
+  ];
+  return (
+    <div style={{ height: '100%', background: t.bg, display: 'flex', flexDirection: 'column' }}>
+      {/* nav */}
+      <div style={{ height: 52, background: t.surface, borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', padding: '0 24px', gap: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ width: 28, height: 28, borderRadius: 7, background: tok.purple, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: '#fff', fontWeight: 700 }}>T</div>
+          <span style={{ fontSize: 14, fontWeight: 700, color: t.text, letterSpacing: '-0.01em' }}>Team Hub</span>
+        </div>
+        <div style={{ flex: 1 }} />
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+          <span style={{ fontSize: 13, color: tok.purple, fontWeight: 600 }}>Workspaces</span>
+          <Avatar name="Demo User" size={28} />
+          <button style={{ fontSize: 12, color: t.muted, background: 'transparent', border: `1px solid ${t.border}`, padding: '4px 10px', borderRadius: 6, cursor: 'pointer', fontFamily: 'DM Sans' }}>Log out</button>
+        </div>
+      </div>
+      {/* content */}
+      <div style={{ flex: 1, padding: '44px 48px', overflow: 'auto' }}>
+        <div style={{ maxWidth: 820, margin: '0 auto' }}>
+          <div style={{ marginBottom: 32 }}>
+            <div style={{ fontSize: 28, fontWeight: 700, color: t.text, letterSpacing: '-0.03em', marginBottom: 8 }}>Good morning, Demo <span style={{ color: tok.purple }}>✦</span></div>
+            <div style={{ fontSize: 14, color: t.muted }}>Pick a workspace to continue</div>
+          </div>
+          {/* grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
+            {wsList.map((ws, i) => (
+              <div key={i} style={{
+                background: t.card, borderRadius: 14, overflow: 'hidden',
+                border: `1px solid ${t.border}`, cursor: 'pointer',
+              }}>
+                {/* color header */}
+                <div style={{ height: 70, background: ws.color + (t.isDark ? '22' : '18'), position: 'relative', display: 'flex', alignItems: 'flex-end', padding: '0 16px 10px' }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 12, background: ws.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, fontWeight: 800, color: '#fff', boxShadow: `0 4px 12px ${ws.color}55` }}>
+                    {ws.initials}
+                  </div>
+                  <div style={{ position: 'absolute', top: 12, right: 12 }}>
+                    <Badge label={ws.role} color={ws.color} />
+                  </div>
+                </div>
+                <div style={{ padding: '14px 16px 16px' }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: t.text, marginBottom: 4, letterSpacing: '-0.01em' }}>{ws.name}</div>
+                  <div style={{ display: 'flex', gap: 14, fontSize: 11, color: t.muted }}>
+                    <span>◉ {ws.members} members</span>
+                    <span>◎ {ws.goals} goals</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+            <div style={{
+              background: 'transparent', border: `2px dashed ${t.subtle}`,
+              borderRadius: 14, cursor: 'pointer',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 130,
+              color: t.muted, fontSize: 13,
+            }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, border: `1.5px dashed ${t.subtle}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: t.muted, fontWeight: 300 }}>+</div>
+              <span>New workspace</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StrataDashboard({ t }) {
+  const wsColor = tok.purple;
+  return (
+    <div style={{ height: '100%', background: t.bg, display: 'flex', overflow: 'hidden' }}>
+      <StrataSidebar t={t} wsColor={wsColor} />
+      <div style={{ flex: 1, overflow: 'auto' }}>
+        {/* workspace hero strip */}
+        <div style={{ background: wsColor + (t.isDark ? '18' : '0d'), borderBottom: `1px solid ${wsColor}28`, padding: '20px 28px 18px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: wsColor }} />
+                <div style={{ fontSize: 18, fontWeight: 700, color: t.text, letterSpacing: '-0.02em' }}>Demo Workspace test</div>
+                <Badge label="ADMIN" color={wsColor} />
+              </div>
+              <div style={{ fontSize: 12, color: t.muted, paddingLeft: 18 }}>A starter workspace for the demo account</div>
+            </div>
+            <div style={{ display: 'flex', gap: -6 }}>
+              {['D','A','U'].map((l, i) => (
+                <div key={i} style={{ width: 28, height: 28, borderRadius: '50%', background: [wsColor, '#22c55e', '#f97316'][i], border: `2px solid ${t.bg}`, marginLeft: i > 0 ? -8 : 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#fff', zIndex: 3 - i, position: 'relative' }}>{l}</div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div style={{ padding: '22px 28px', display: 'flex', gap: 20 }}>
+          {/* left */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 18 }}>
+            {/* stats */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+              {[
+                { label: 'Goals', val: 8, icon: '◎', color: wsColor },
+                { label: 'Done this week', val: 4, icon: '✓', color: '#22c55e' },
+                { label: 'Overdue', val: 2, icon: '⚠', color: '#f97316' },
+              ].map((s, i) => (
+                <div key={i} style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 10, padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 9, background: s.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: s.color }}>{s.icon}</div>
+                  <div>
+                    <div style={{ fontSize: 22, fontWeight: 700, color: t.text, letterSpacing: '-0.03em' }}>{s.val}</div>
+                    <div style={{ fontSize: 11, color: t.muted }}>{s.label}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* goals preview */}
+            <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, overflow: 'hidden' }}>
+              <div style={{ padding: '14px 18px', borderBottom: `1px solid ${t.border}`, display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: t.text }}>Active Goals</span>
+                <span style={{ fontSize: 12, color: wsColor }}>View all →</span>
+              </div>
+              {[
+                { name: 'Q2 Product Launch', pct: 65, due: 'May 13', status: 'In Progress' },
+                { name: 'Marketing Campaign', pct: 25, due: 'May 9', status: 'In Progress' },
+                { name: 'Infra Migration', pct: 90, due: 'May 3', status: 'On Track' },
+              ].map((g, i) => (
+                <div key={i} style={{ padding: '12px 18px', borderBottom: `1px solid ${t.border}`, display: 'flex', gap: 14, alignItems: 'center' }}>
+                  <ProgressRing pct={g.pct} size={36} stroke={3} color={wsColor} trackColor={t.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: t.text, marginBottom: 3 }}>{g.name}</div>
+                    <ProgressBar pct={g.pct} height={3} color={wsColor} trackColor={t.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'} />
+                  </div>
+                  <div style={{ fontSize: 11, color: t.muted, textAlign: 'right' }}>
+                    <div style={{ marginBottom: 2 }}>{g.pct}%</div>
+                    <div>Due {g.due}</div>
+                  </div>
+                  <Badge label={g.status} color={g.status === 'On Track' ? '#22c55e' : wsColor} />
+                </div>
+              ))}
+            </div>
+            {/* announcement */}
+            <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: '14px 18px' }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: t.text, marginBottom: 12 }}>Latest Announcement</div>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <Avatar name="Demo User" size={32} />
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: t.text, marginBottom: 3 }}>Team standup moved to 10am</div>
+                  <div style={{ fontSize: 11, color: t.muted, marginBottom: 8 }}>Demo User · 2 hours ago</div>
+                  <div style={{ display: 'flex', gap: 8, fontSize: 13 }}>
+                    {['👍 4', '🎉 2', '💬 1'].map((r, i) => (
+                      <div key={i} style={{ padding: '2px 8px', borderRadius: 999, background: t.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)', fontSize: 11, color: t.muted }}>{r}</div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* right col */}
+          <div style={{ width: 200, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: 16 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: t.muted, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 12 }}>Members</div>
+              {[
+                { name: 'Demo User', role: 'Admin', color: wsColor, online: true },
+                { name: 'Alice', role: 'Member', color: '#22c55e', online: true },
+                { name: 'user1', role: 'Member', color: '#f97316', online: false },
+              ].map((m, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderTop: i > 0 ? `1px solid ${t.border}` : 'none' }}>
+                  <div style={{ position: 'relative' }}>
+                    <Avatar name={m.name} size={24} color={m.color} />
+                    {m.online && <div style={{ position: 'absolute', bottom: 0, right: 0, width: 6, height: 6, borderRadius: '50%', background: '#22c55e', border: `1.5px solid ${t.card}` }} />}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 500, color: t.text }}>{m.name}</div>
+                    <div style={{ fontSize: 10, color: t.muted }}>{m.role}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <HatchFill width="100%" height={120} label="Goal completion chart (Recharts)" style={{ borderRadius: 12 }} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StrataGoals({ t }) {
+  const wsColor = tok.purple;
+  const goals = [
+    { name: 'Q2 Product Launch', pct: 65, milestones: 3, owner: 'DU', due: 'May 13', status: 'In Progress', ownerColor: wsColor },
+    { name: 'Marketing Campaign', pct: 25, milestones: 2, owner: 'AL', due: 'May 9', status: 'In Progress', ownerColor: '#22c55e' },
+    { name: 'Infra Migration', pct: 90, milestones: 4, owner: 'DU', due: 'May 3', status: 'On Track', ownerColor: wsColor },
+    { name: 'Hire 3 Engineers', pct: 40, milestones: 2, owner: 'AL', due: 'Jun 1', status: 'At Risk', ownerColor: '#22c55e' },
+  ];
+  const statusColor = (s) => s === 'On Track' ? '#22c55e' : s === 'At Risk' ? '#f97316' : wsColor;
+  return (
+    <div style={{ height: '100%', background: t.bg, display: 'flex', overflow: 'hidden' }}>
+      <StrataSidebar t={t} wsColor={wsColor} />
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ padding: '18px 24px 14px', borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: t.text, letterSpacing: '-0.02em', flex: 1 }}>Goals</div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {['All','In Progress','On Track','At Risk'].map((f, i) => (
+              <div key={i} style={{ padding: '4px 10px', borderRadius: 6, background: i === 0 ? wsColor + '22' : 'transparent', border: `1px solid ${i === 0 ? wsColor + '44' : t.border}`, color: i === 0 ? wsColor : t.muted, fontSize: 12, cursor: 'pointer', fontWeight: i === 0 ? 600 : 400 }}>{f}</div>
+            ))}
+          </div>
+          <button style={{ padding: '6px 14px', borderRadius: 8, background: wsColor, color: '#fff', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, fontFamily: 'DM Sans' }}>+ New Goal</button>
+        </div>
+        {/* goal list in table-ish layout */}
+        <div style={{ flex: 1, overflow: 'auto', padding: '16px 24px' }}>
+          <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, overflow: 'hidden' }}>
+            {/* table header */}
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 80px 80px 80px', padding: '10px 16px', borderBottom: `1px solid ${t.border}`, gap: 12 }}>
+              {['Goal','Progress','Owner','Due','Status'].map((h, i) => (
+                <div key={i} style={{ fontSize: 11, fontWeight: 600, color: t.muted, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</div>
+              ))}
+            </div>
+            {goals.map((g, i) => (
+              <div key={i} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 80px 80px 80px', padding: '13px 16px', borderBottom: i < goals.length - 1 ? `1px solid ${t.border}` : 'none', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: t.text, marginBottom: 2 }}>{g.name}</div>
+                  <div style={{ fontSize: 11, color: t.muted }}>{g.milestones} milestones</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <ProgressBar pct={g.pct} height={4} color={wsColor} trackColor={t.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'} />
+                  <div style={{ fontSize: 11, color: t.muted, fontFamily: 'DM Mono', flexShrink: 0, width: 28 }}>{g.pct}%</div>
+                </div>
+                <Avatar name={g.owner} size={26} color={g.ownerColor} />
+                <div style={{ fontSize: 12, color: t.muted, fontFamily: 'DM Mono' }}>{g.due}</div>
+                <Badge label={g.status} color={statusColor(g.status)} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── DIRECTION C: "FLUX" ───────────────────────────────────────────────────────
+// Hero cover zone, stat rings as hero elements, command palette feel
+
+function FluxNav({ t, wsName }) {
+  return (
+    <div style={{ height: 48, background: t.surface, borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', padding: '0 20px', gap: 14, flexShrink: 0 }}>
+      <div style={{ width: 26, height: 26, borderRadius: 7, background: tok.purple, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#fff', fontWeight: 700 }}>T</div>
+      {wsName && <>
+        <div style={{ fontSize: 12, color: t.muted }}>›</div>
+        <div style={{ fontSize: 13, fontWeight: 600, color: t.text }}>{wsName}</div>
+      </>}
+      <div style={{ flex: 1 }} />
+      {/* command bar */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '5px 12px', borderRadius: 8, background: t.card, border: `1px solid ${t.border}`, color: t.muted, fontSize: 12, cursor: 'text', width: 160 }}>
+        <span style={{ fontSize: 11 }}>⌘K</span>
+        <span style={{ flex: 1 }}>Search…</span>
+      </div>
+      <div style={{ position: 'relative' }}>
+        <Avatar name="Demo User" size={28} />
+        <div style={{ position: 'absolute', bottom: 0, right: 0, width: 7, height: 7, borderRadius: '50%', background: '#22c55e', border: `1.5px solid ${t.surface}` }} />
+      </div>
+    </div>
+  );
+}
+
+function FluxWorkspacePicker({ t }) {
+  const wsList = [
+    { name: 'Demo Workspace', desc: 'Starter workspace', members: 3, role: 'ADMIN', color: tok.purple, pct: 62 },
+    { name: 'Marketing', desc: 'Phase 2 test', members: 1, role: 'ADMIN', color: '#22c55e', pct: 38 },
+    { name: 'Test 2', desc: 'A test workspace', members: 2, role: 'MEMBER', color: '#f97316', pct: 15 },
+  ];
+  return (
+    <div style={{ height: '100%', background: t.bg, display: 'flex', flexDirection: 'column' }}>
+      <FluxNav t={t} />
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32 }}>
+        <div style={{ width: '100%', maxWidth: 700 }}>
+          <div style={{ textAlign: 'center', marginBottom: 40 }}>
+            <div style={{ fontSize: 30, fontWeight: 700, color: t.text, letterSpacing: '-0.03em', marginBottom: 8 }}>
+              Your workspaces
+            </div>
+            <div style={{ fontSize: 14, color: t.muted }}>Jump back into where you left off</div>
+          </div>
+          {/* ⌘K search */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', borderRadius: 12, background: t.card, border: `1px solid ${t.border}`, marginBottom: 24, color: t.muted, fontSize: 14 }}>
+            <span>⌕</span>
+            <span style={{ flex: 1 }}>Search or create a workspace…</span>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <span style={{ padding: '1px 5px', borderRadius: 4, background: t.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', fontSize: 10, fontFamily: 'DM Mono', color: t.muted }}>⌘K</span>
+            </div>
+          </div>
+          {/* workspace rows */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {wsList.map((ws, i) => (
+              <div key={i} style={{
+                background: t.card, border: `1px solid ${t.border}`,
+                borderRadius: 12, padding: '14px 18px',
+                display: 'flex', alignItems: 'center', gap: 16, cursor: 'pointer',
+              }}>
+                <div style={{ width: 40, height: 40, borderRadius: 11, background: ws.color + '22', border: `1.5px solid ${ws.color}44`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 800, color: ws.color, flexShrink: 0 }}>
+                  {ws.name[0]}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: t.text }}>{ws.name}</div>
+                    <Badge label={ws.role} color={ws.color} />
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <ProgressBar pct={ws.pct} height={3} color={ws.color} trackColor={t.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'} />
+                    <span style={{ fontSize: 10, fontFamily: 'DM Mono', color: t.muted, flexShrink: 0 }}>{ws.pct}% goals</span>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                  <span style={{ fontSize: 11, color: t.muted }}>{ws.members} members</span>
+                  <div style={{ display: 'flex', gap: -4 }}>
+                    {Array.from({ length: ws.members }).map((_, j) => (
+                      <div key={j} style={{ width: 18, height: 18, borderRadius: '50%', background: [ws.color, '#aaa', '#888'][j], border: `1.5px solid ${t.card}`, marginLeft: j > 0 ? -5 : 0, fontSize: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#fff' }}>
+                        {['D','A','U'][j]}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div style={{ fontSize: 16, color: t.muted }}>›</div>
+              </div>
+            ))}
+            <div style={{ border: `1.5px dashed ${t.subtle}`, borderRadius: 12, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', color: t.muted, fontSize: 13 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 11, border: `1.5px dashed ${t.subtle}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 300 }}>+</div>
+              Create a new workspace
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FluxDashboard({ t }) {
+  const wsColor = tok.purple;
+  return (
+    <div style={{ height: '100%', background: t.bg, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <FluxNav t={t} wsName="Demo Workspace" />
+      {/* workspace cover */}
+      <div style={{ background: `linear-gradient(135deg, ${wsColor}28 0%, ${wsColor}08 100%)`, borderBottom: `1px solid ${wsColor}28`, padding: '20px 28px 16px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: wsColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 800, color: '#fff', boxShadow: `0 4px 16px ${wsColor}55` }}>D</div>
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: t.text, letterSpacing: '-0.02em' }}>Demo Workspace test</div>
+              <div style={{ fontSize: 12, color: t.muted, marginTop: 2 }}>A starter workspace for the demo account</div>
+            </div>
+          </div>
+          {/* online cluster */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', gap: -4 }}>
+              {['D','A'].map((l, i) => (
+                <div key={i} style={{ width: 28, height: 28, borderRadius: '50%', background: [wsColor,'#22c55e'][i], border: `2px solid transparent`, marginLeft: i > 0 ? -8 : 0, zIndex: 2 - i, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#fff' }}>{l}</div>
+              ))}
+            </div>
+            <div style={{ padding: '3px 8px', borderRadius: 999, background: '#22c55e18', border: '1px solid #22c55e30', display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#22c55e', fontWeight: 600 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e' }} /> 2 online
+            </div>
+          </div>
+        </div>
+        {/* sub nav */}
+        <div style={{ display: 'flex', gap: 0, marginTop: 14 }}>
+          {['Overview','Goals','Announcements','Action Items','Settings'].map((tab, i) => (
+            <div key={i} style={{ padding: '6px 14px', fontSize: 12, fontWeight: i === 0 ? 600 : 400, color: i === 0 ? wsColor : t.muted, borderBottom: i === 0 ? `2px solid ${wsColor}` : '2px solid transparent', cursor: 'pointer' }}>{tab}</div>
+          ))}
+        </div>
+      </div>
+      {/* body */}
+      <div style={{ flex: 1, overflow: 'auto', padding: '20px 28px', display: 'flex', gap: 20 }}>
+        {/* main */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* big ring stats */}
+          <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 14, padding: '18px 20px', display: 'flex', gap: 24, alignItems: 'center' }}>
+            {[
+              { label: 'Total Goals', pct: 78, val: '8', sub: 'active', color: wsColor },
+              { label: 'Completed', pct: 50, val: '4', sub: 'this week', color: '#22c55e' },
+              { label: 'Overdue', pct: 25, val: '2', sub: 'need attention', color: '#f97316' },
+            ].map((s, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, borderRight: i < 2 ? `1px solid ${t.border}` : 'none', paddingRight: i < 2 ? 24 : 0 }}>
+                <ProgressRing pct={s.pct} size={52} stroke={5} color={s.color} trackColor={t.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'} />
+                <div>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: t.text, letterSpacing: '-0.04em', lineHeight: 1 }}>{s.val}</div>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: t.text, marginTop: 2 }}>{s.label}</div>
+                  <div style={{ fontSize: 11, color: t.muted }}>{s.sub}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* goals */}
+          <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12 }}>
+            <div style={{ padding: '12px 16px', borderBottom: `1px solid ${t.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: t.text }}>Active Goals</span>
+              <span style={{ fontSize: 12, color: wsColor }}>All goals →</span>
+            </div>
+            {[
+              { name: 'Q2 Product Launch', pct: 65, owner: 'Demo User', due: 'May 13', status: 'In Progress' },
+              { name: 'Marketing Campaign', pct: 25, owner: 'Alice', due: 'May 9', status: 'In Progress' },
+              { name: 'Infra Migration', pct: 90, owner: 'Demo User', due: 'May 3', status: 'On Track' },
+            ].map((g, i) => (
+              <div key={i} style={{ padding: '11px 16px', borderBottom: i < 2 ? `1px solid ${t.border}` : 'none', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <ProgressRing pct={g.pct} size={34} stroke={3} color={wsColor} trackColor={t.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: t.text, marginBottom: 3 }}>{g.name}</div>
+                  <ProgressBar pct={g.pct} height={3} color={wsColor} trackColor={t.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'} />
+                </div>
+                <div style={{ fontSize: 11, fontFamily: 'DM Mono', color: t.muted, width: 28, textAlign: 'right' }}>{g.pct}%</div>
+                <Badge label={g.status} color={g.status === 'On Track' ? '#22c55e' : wsColor} />
+              </div>
+            ))}
+          </div>
+        </div>
+        {/* right */}
+        <div style={{ width: 200, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* members */}
+          <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: t.muted, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 10 }}>Members</div>
+            {[
+              { name: 'Demo User', role: 'Admin', color: wsColor, online: true },
+              { name: 'Alice', role: 'Member', color: '#22c55e', online: true },
+              { name: 'user1', role: 'Member', color: '#f97316', online: false },
+            ].map((m, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderTop: i > 0 ? `1px solid ${t.border}` : 'none' }}>
+                <div style={{ position: 'relative' }}>
+                  <Avatar name={m.name} size={24} color={m.color} />
+                  {m.online && <div style={{ position: 'absolute', bottom: 0, right: 0, width: 6, height: 6, borderRadius: '50%', background: '#22c55e', border: `1.5px solid ${t.card}` }} />}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 11, fontWeight: 500, color: t.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</div>
+                  <div style={{ fontSize: 10, color: t.muted }}>{m.role}</div>
+                </div>
+                {m.online && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', flexShrink: 0 }} />}
+              </div>
+            ))}
+          </div>
+          {/* announcements */}
+          <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: t.muted, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 10 }}>Pinned</div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ width: 3, background: wsColor, borderRadius: 99, flexShrink: 0 }} />
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 500, color: t.text, lineHeight: 1.4 }}>Team standup moved to 10am</div>
+                <div style={{ fontSize: 10, color: t.muted, marginTop: 4 }}>2h ago · 4 reactions</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FluxGoals({ t }) {
+  const wsColor = tok.purple;
+  const goals = [
+    { name: 'Q2 Product Launch', pct: 65, milestones: 3, owner: 'DU', due: 'May 13', status: 'In Progress', ownerColor: wsColor },
+    { name: 'Marketing Campaign', pct: 25, milestones: 2, owner: 'AL', due: 'May 9', status: 'In Progress', ownerColor: '#22c55e' },
+    { name: 'Infra Migration', pct: 90, milestones: 4, owner: 'DU', due: 'May 3', status: 'On Track', ownerColor: wsColor },
+    { name: 'Hire 3 Engineers', pct: 40, milestones: 2, owner: 'AL', due: 'Jun 1', status: 'At Risk', ownerColor: '#22c55e' },
+  ];
+  return (
+    <div style={{ height: '100%', background: t.bg, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <FluxNav t={t} wsName="Demo Workspace" />
+      <div style={{ height: 46, background: t.surface, borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', padding: '0 28px', gap: 0, flexShrink: 0 }}>
+        {['Overview','Goals','Announcements','Action Items','Settings'].map((tab, i) => (
+          <div key={i} style={{ padding: '6px 14px', fontSize: 12, fontWeight: i === 1 ? 600 : 400, color: i === 1 ? wsColor : t.muted, borderBottom: i === 1 ? `2px solid ${wsColor}` : '2px solid transparent', cursor: 'pointer' }}>{tab}</div>
+        ))}
+      </div>
+      <div style={{ flex: 1, overflow: 'auto', padding: '18px 28px' }}>
+        {/* summary bar */}
+        <div style={{ display: 'flex', gap: 14, marginBottom: 18 }}>
+          {[
+            { label: 'Total', val: 4, color: t.text },
+            { label: 'In Progress', val: 2, color: wsColor },
+            { label: 'On Track', val: 1, color: '#22c55e' },
+            { label: 'At Risk', val: 1, color: '#f97316' },
+          ].map((s, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, background: t.card, border: `1px solid ${t.border}`, fontSize: 12, color: s.color }}>
+              <span style={{ fontWeight: 700 }}>{s.val}</span>
+              <span style={{ color: t.muted }}>{s.label}</span>
+            </div>
+          ))}
+          <div style={{ flex: 1 }} />
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <div style={{ padding: '6px 10px', borderRadius: 7, background: t.card, border: `1px solid ${t.border}`, fontSize: 11, color: t.muted, cursor: 'pointer' }}>⊞ Board</div>
+            <div style={{ padding: '6px 10px', borderRadius: 7, background: wsColor + '22', border: `1px solid ${wsColor}44`, fontSize: 11, color: wsColor, cursor: 'pointer' }}>☰ List</div>
+            <button style={{ padding: '6px 14px', borderRadius: 8, background: wsColor, color: '#fff', border: 'none', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'DM Sans' }}>+ New Goal</button>
+          </div>
+        </div>
+        {/* goal cards - 2 col grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          {goals.map((g, i) => (
+            <div key={i} style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 12, padding: '16px 18px', cursor: 'pointer', position: 'relative', overflow: 'hidden' }}>
+              {/* subtle progress glow */}
+              <div style={{ position: 'absolute', top: 0, left: 0, width: `${g.pct}%`, height: 3, background: wsColor, borderRadius: '12px 0 0 0', opacity: 0.8 }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                <div style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: t.text, letterSpacing: '-0.01em', marginBottom: 4 }}>{g.name}</div>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <Badge label={g.status} color={g.status === 'At Risk' ? '#f97316' : g.status === 'On Track' ? '#22c55e' : wsColor} />
+                    <span style={{ fontSize: 11, color: t.muted }}>{g.milestones} milestones</span>
+                  </div>
+                </div>
+                <ProgressRing pct={g.pct} size={44} stroke={4} color={wsColor} trackColor={t.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Avatar name={g.owner} size={20} color={g.ownerColor} />
+                  <span style={{ fontSize: 11, color: t.muted }}>{g.owner}</span>
+                </div>
+                <span style={{ fontSize: 11, fontFamily: 'DM Mono', color: t.muted }}>Due {g.due}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── MAIN APP ──────────────────────────────────────────────────────────────────
+function App() {
+  const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const theme = tweaks.theme;
+  const dk = useTheme('dark');
+  const lt = useTheme('light');
+  const t = theme === 'dark' ? dk : lt;
+
+  const artboardStyle = { width: 860, height: 520, borderRadius: 12, overflow: 'hidden', background: t.bg };
+
+  return (
+    <>
+      <DesignCanvas>
+        {/* ─── DIRECTION A: ORBITAL ─────────────────────────── */}
+        <DCSection id="dir-a" title="Direction A — Orbital  ·  slim icon rail, floating panels, Notion-calm">
+          <DCArtboard id="a-picker" label="01 Workspace Picker" width={860} height={520}>
+            <div style={artboardStyle}><OrbitalWorkspacePicker t={t} /></div>
+          </DCArtboard>
+          <DCArtboard id="a-dash" label="02 Workspace Dashboard" width={860} height={520}>
+            <div style={artboardStyle}><OrbitalDashboard t={t} /></div>
+          </DCArtboard>
+          <DCArtboard id="a-goals" label="03 Goals & Milestones" width={860} height={520}>
+            <div style={artboardStyle}><OrbitalGoals t={t} /></div>
+          </DCArtboard>
+        </DCSection>
+
+        {/* ─── DIRECTION B: STRATA ──────────────────────────── */}
+        <DCSection id="dir-b" title="Direction B — Strata  ·  workspace color bleeds, table layout, wide sidebar">
+          <DCArtboard id="b-picker" label="01 Workspace Picker" width={860} height={520}>
+            <div style={artboardStyle}><StrataWorkspacePicker t={t} /></div>
+          </DCArtboard>
+          <DCArtboard id="b-dash" label="02 Workspace Dashboard" width={860} height={520}>
+            <div style={artboardStyle}><StrataDashboard t={t} /></div>
+          </DCArtboard>
+          <DCArtboard id="b-goals" label="03 Goals & Milestones" width={860} height={520}>
+            <div style={artboardStyle}><StrataGoals t={t} /></div>
+          </DCArtboard>
+        </DCSection>
+
+        {/* ─── DIRECTION C: FLUX ────────────────────────────── */}
+        <DCSection id="dir-c" title="Direction C — Flux  ·  hero cover, command palette, ring stats">
+          <DCArtboard id="c-picker" label="01 Workspace Picker" width={860} height={520}>
+            <div style={artboardStyle}><FluxWorkspacePicker t={t} /></div>
+          </DCArtboard>
+          <DCArtboard id="c-dash" label="02 Workspace Dashboard" width={860} height={520}>
+            <div style={artboardStyle}><FluxDashboard t={t} /></div>
+          </DCArtboard>
+          <DCArtboard id="c-goals" label="03 Goals & Milestones" width={860} height={520}>
+            <div style={artboardStyle}><FluxGoals t={t} /></div>
+          </DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+
+      <TweaksPanel>
+        <TweakSection label="Theme" />
+        <TweakRadio label="Mode" value={tweaks.theme} options={['dark','light']} onChange={(v) => setTweak('theme', v)} />
+      </TweaksPanel>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

@@ -29,6 +29,8 @@ export default function WorkspaceSettingsPage() {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors, isSubmitting, isDirty },
   } = useForm({
     defaultValues: {
@@ -37,6 +39,8 @@ export default function WorkspaceSettingsPage() {
       accentColor: workspace?.accentColor || "#6366f1",
     },
   });
+
+  const watchedAccentColor = watch("accentColor");
 
   useEffect(() => {
     if (workspace) {
@@ -120,12 +124,8 @@ export default function WorkspaceSettingsPage() {
             <div className="flex items-center gap-2">
               <input
                 type="color"
-                {...register("accentColor", {
-                  pattern: {
-                    value: /^#[0-9a-fA-F]{6}$/,
-                    message: "Must be a hex colour",
-                  },
-                })}
+                value={watchedAccentColor || "#6366f1"}
+                onChange={(e) => setValue("accentColor", e.target.value, { shouldDirty: true, shouldValidate: true })}
                 disabled={!isAdmin}
                 className="h-9 w-12 cursor-pointer rounded border border-[color:var(--border)] bg-transparent disabled:opacity-60"
               />

@@ -19,6 +19,7 @@ const NAV = [
   { href: "/announcements", label: "Announcements" },
   { href: "/action-items", label: "Action items" },
   { href: "/settings", label: "Settings" },
+  { href: "/settings/audit-log", label: "Audit Log", adminOnly: true },
 ];
 
 export default function WorkspaceShellLayout({ children }) {
@@ -200,18 +201,19 @@ export default function WorkspaceShellLayout({ children }) {
 
   const accentStyle = { "--accent": workspace.accentColor };
   const base = `/workspaces/${workspaceId}`;
+  const isAdmin = workspace.role === "ADMIN";
 
   return (
     <div className="grid gap-6 md:grid-cols-[240px_1fr]" style={accentStyle}>
       <aside className="flex flex-col gap-4">
         <WorkspaceSwitcher currentId={workspaceId} />
         <nav className="flex flex-col gap-1 text-sm">
-          {NAV.map((item) => {
+          {NAV.filter((item) => !item.adminOnly || isAdmin).map((item) => {
             const href = `${base}${item.href}`;
             const isActive =
               item.href === ""
                 ? pathname === base
-                : pathname.startsWith(href);
+                : pathname === href || (item.href !== "/settings" && pathname.startsWith(href));
             const cls = `rounded-md px-3 py-2 transition ${
               isActive
                 ? "bg-[color:var(--accent)]/10 text-[color:var(--accent)] font-medium"

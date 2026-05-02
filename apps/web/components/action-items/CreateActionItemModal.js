@@ -33,12 +33,11 @@ function Field({ label, children }) {
 const inputCls =
   "w-full rounded-lg border border-[color:var(--border)] bg-[color:var(--background)] px-3 py-2 text-sm text-[color:var(--foreground)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]/40 transition";
 
-export function CreateActionItemModal({ open, onClose, onSubmit, members = [], goals = [], initialItem = null }) {
+export function CreateActionItemModal({ open, onClose, onSubmit, onDelete, members = [], goals = [], initialItem = null, defaultGoalId = "" }) {
   const [form, setForm] = useState(EMPTY);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  // Populate form when editing existing item
   useEffect(() => {
     if (initialItem) {
       setForm({
@@ -53,10 +52,10 @@ export function CreateActionItemModal({ open, onClose, onSubmit, members = [], g
         goalId: initialItem.goalId || "",
       });
     } else {
-      setForm(EMPTY);
+      setForm({ ...EMPTY, goalId: defaultGoalId });
     }
     setError("");
-  }, [initialItem, open]);
+  }, [initialItem, open, defaultGoalId]);
 
   function set(key, value) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -166,21 +165,32 @@ export function CreateActionItemModal({ open, onClose, onSubmit, members = [], g
           </select>
         </Field>
 
-        <div className="flex justify-end gap-3 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg border border-[color:var(--border)] px-4 py-2 text-sm text-[color:var(--muted)] hover:bg-[color:var(--border)]/30 transition"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={busy}
-            className="rounded-lg bg-[color:var(--accent)] px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-60 transition"
-          >
-            {busy ? "Saving…" : initialItem ? "Save Changes" : "Create"}
-          </button>
+        <div className="flex items-center justify-between gap-3 pt-2">
+          {onDelete && initialItem ? (
+            <button
+              type="button"
+              onClick={() => { onClose(); onDelete(initialItem.id); }}
+              className="rounded-lg border border-red-200 px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+            >
+              Delete
+            </button>
+          ) : <span />}
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg border border-[color:var(--border)] px-4 py-2 text-sm text-[color:var(--muted)] hover:bg-[color:var(--border)]/30 transition"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={busy}
+              className="rounded-lg bg-[color:var(--accent)] px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-60 transition"
+            >
+              {busy ? "Saving…" : initialItem ? "Save Changes" : "Create"}
+            </button>
+          </div>
         </div>
       </form>
     </Modal>

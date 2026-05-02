@@ -65,11 +65,6 @@ export default function WorkspaceOverviewPage() {
         </ul>
       </section>
 
-      <section className="mt-8 rounded-lg border border-dashed border-[color:var(--border)] p-6 text-center">
-        <p className="text-sm text-[color:var(--muted)]">
-          Goals, announcements, and action items arrive in Phase 3+.
-        </p>
-      </section>
     </div>
   );
 }

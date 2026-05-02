@@ -14,6 +14,7 @@ import { WorkspaceSwitcher } from "../../../../components/workspace/WorkspaceSwi
 
 const NAV = [
   { href: "", label: "Overview" },
+  { href: "/dashboard", label: "Dashboard" },
   { href: "/goals", label: "Goals" },
   { href: "/announcements", label: "Announcements" },
   { href: "/action-items", label: "Action items" },

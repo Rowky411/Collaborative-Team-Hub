@@ -6,6 +6,7 @@ import { useParams, usePathname, useRouter } from "next/navigation";
 import { useWorkspaceStore } from "../../../../lib/stores/workspaceStore";
 import { usePresenceStore } from "../../../../lib/stores/presenceStore";
 import { useGoalStore } from "../../../../lib/stores/goalStore";
+import { useActionItemStore } from "../../../../lib/stores/actionItemStore";
 import { getSocket } from "../../../../lib/socket";
 import { WorkspaceSwitcher } from "../../../../components/workspace/WorkspaceSwitcher";
 
@@ -13,7 +14,7 @@ const NAV = [
   { href: "", label: "Overview" },
   { href: "/goals", label: "Goals" },
   { href: "/announcements", label: "Announcements", disabled: true },
-  { href: "/action-items", label: "Action items", disabled: true },
+  { href: "/action-items", label: "Action items" },
   { href: "/settings", label: "Settings" },
 ];
 
@@ -36,6 +37,11 @@ export default function WorkspaceShellLayout({ children }) {
   const applyGoalUpdated = useGoalStore((s) => s.applyGoalUpdated);
   const applyGoalDeleted = useGoalStore((s) => s.applyGoalDeleted);
   const applyUpdatePosted = useGoalStore((s) => s.applyUpdatePosted);
+
+  const applyItemCreated = useActionItemStore((s) => s.applyItemCreated);
+  const applyStatusChanged = useActionItemStore((s) => s.applyStatusChanged);
+  const applyItemUpdated = useActionItemStore((s) => s.applyItemUpdated);
+  const applyItemDeleted = useActionItemStore((s) => s.applyItemDeleted);
 
   const setOnline = usePresenceStore((s) => s.setOnline);
   const setOffline = usePresenceStore((s) => s.setOffline);
@@ -80,6 +86,11 @@ export default function WorkspaceShellLayout({ children }) {
     const onGoalDeleted = ({ goalId }) => applyGoalDeleted(goalId);
     const onUpdatePosted = ({ update }) => applyUpdatePosted(update);
 
+    const onItemCreated = ({ actionItem }) => applyItemCreated(actionItem);
+    const onStatusChanged = (data) => applyStatusChanged(data);
+    const onItemUpdated = ({ actionItem }) => applyItemUpdated(actionItem);
+    const onItemDeleted = ({ id }) => applyItemDeleted(id);
+
     socket.on("workspace:member_added", onMemberAdded);
     socket.on("workspace:member_removed", onMemberRemoved);
     socket.on("workspace:updated", onWorkspaceUpdated);
@@ -90,6 +101,10 @@ export default function WorkspaceShellLayout({ children }) {
     socket.on("goal:updated", onGoalUpdated);
     socket.on("goal:deleted", onGoalDeleted);
     socket.on("goal:update_posted", onUpdatePosted);
+    socket.on("actionItem:created", onItemCreated);
+    socket.on("actionItem:statusChanged", onStatusChanged);
+    socket.on("actionItem:updated", onItemUpdated);
+    socket.on("actionItem:deleted", onItemDeleted);
 
     const join = () => socket.emit("workspace:join", workspaceId);
     if (socket.connected) join();
@@ -107,6 +122,10 @@ export default function WorkspaceShellLayout({ children }) {
       socket.off("goal:updated", onGoalUpdated);
       socket.off("goal:deleted", onGoalDeleted);
       socket.off("goal:update_posted", onUpdatePosted);
+      socket.off("actionItem:created", onItemCreated);
+      socket.off("actionItem:statusChanged", onStatusChanged);
+      socket.off("actionItem:updated", onItemUpdated);
+      socket.off("actionItem:deleted", onItemDeleted);
       socket.off("connect", join);
     };
   }, [
@@ -121,6 +140,10 @@ export default function WorkspaceShellLayout({ children }) {
     applyGoalUpdated,
     applyGoalDeleted,
     applyUpdatePosted,
+    applyItemCreated,
+    applyStatusChanged,
+    applyItemUpdated,
+    applyItemDeleted,
   ]);
 
   if (loading && !workspace) {

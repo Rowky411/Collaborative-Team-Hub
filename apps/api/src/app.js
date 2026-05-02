@@ -8,6 +8,7 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import authRoutes from './routes/auth.routes.js';
 import workspaceRoutes from './routes/workspace.routes.js';
 import goalRoutes from './routes/goal.routes.js';
+import actionItemRoutes from './routes/actionItem.routes.js';
 
 export function createApp() {
   const app = express();
@@ -34,6 +35,7 @@ export function createApp() {
   app.use('/api/auth', authRoutes);
   app.use('/api/workspaces', workspaceRoutes);
   app.use('/api/workspaces/:workspaceId/goals', goalRoutes);
+  app.use('/api/workspaces/:workspaceId/action-items', actionItemRoutes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

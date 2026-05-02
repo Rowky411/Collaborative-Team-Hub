@@ -85,37 +85,6 @@ export function FluxTopNav() {
 
       <div className="flex-1" />
 
-      {/* ⌘K command bar */}
-      <button
-        onClick={() => setCmdOpen(true)}
-        className="flex items-center gap-2"
-        style={{
-          padding: "6px 12px",
-          borderRadius: 9,
-          background: "var(--input-bg)",
-          border: "1px solid var(--border)",
-          color: "var(--muted)",
-          fontSize: 12,
-          width: 200,
-          cursor: "text",
-        }}
-      >
-        <span style={{ fontSize: 13, opacity: 0.6 }}>⌕</span>
-        <span style={{ flex: 1, textAlign: "left" }}>Search…</span>
-        <kbd
-          className="font-mono"
-          style={{
-            padding: "1px 5px",
-            borderRadius: 4,
-            background: "var(--subtle)",
-            fontSize: 10,
-            color: "var(--muted)",
-            border: "1px solid var(--border)",
-          }}
-        >
-          ⌘K
-        </kbd>
-      </button>
 
       {/* Online pill */}
       {ws ? (

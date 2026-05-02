@@ -10,7 +10,7 @@ const COLUMN_STYLES = {
   DONE:        { label: "Done",        color: "#22c55e" },
 };
 
-export function KanbanColumn({ status, items, onCardClick }) {
+export function KanbanColumn({ status, items, onCardView, onCardEdit }) {
   const cfg = COLUMN_STYLES[status] || { label: status, color: "#8888a0" };
 
   return (
@@ -63,7 +63,8 @@ export function KanbanColumn({ status, items, onCardClick }) {
                 key={item.id}
                 item={item}
                 index={index}
-                onClick={onCardClick}
+                onView={onCardView}
+                onEdit={onCardEdit}
               />
             ))}
             {provided.placeholder}

@@ -7,38 +7,8 @@ import { useWorkspaceStore } from "../../../../../../lib/stores/workspaceStore";
 import { AuditLogFilters } from "../../../../../../components/audit-log/AuditLogFilters";
 import { AuditLogTimeline } from "../../../../../../components/audit-log/AuditLogTimeline";
 
-const EMPTY_FILTERS = { entityType: '', actorId: '', from: '', to: '' };
+const EMPTY_FILTERS = { entityType: "", actorId: "", from: "", to: "" };
 const LIMIT = 100;
-
-function DiffPanel({ entry, onClose }) {
-  if (!entry) return null;
-  const hasDiff = entry.diff && Object.keys(entry.diff).length > 0;
-  return (
-    <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--background)] p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <p className="text-sm font-semibold">
-          {entry.actor?.name ?? entry.actorId} · {entry.action}
-        </p>
-        <button
-          onClick={onClose}
-          className="text-xs text-[color:var(--muted)] hover:text-[color:var(--foreground)] transition"
-        >
-          ✕ close
-        </button>
-      </div>
-      <p className="mb-2 text-xs text-[color:var(--muted)]">
-        Entity: {entry.entityType} <code className="ml-1 rounded bg-[color:var(--border)]/40 px-1">{entry.entityId}</code>
-      </p>
-      {hasDiff ? (
-        <pre className="max-h-64 overflow-auto rounded-lg bg-[color:var(--border)]/20 p-3 text-xs text-[color:var(--foreground)]">
-          {JSON.stringify(entry.diff, null, 2)}
-        </pre>
-      ) : (
-        <p className="text-xs text-[color:var(--muted)]">No diff recorded.</p>
-      )}
-    </div>
-  );
-}
 
 export default function AuditLogPage() {
   const { workspaceId } = useParams();
@@ -56,7 +26,7 @@ export default function AuditLogPage() {
 
   // Redirect non-admins
   useEffect(() => {
-    if (workspace && workspace.role !== 'ADMIN') {
+    if (workspace && workspace.role !== "ADMIN") {
       router.replace(`/workspaces/${workspaceId}/settings`);
     }
   }, [workspace, workspaceId, router]);
@@ -65,15 +35,11 @@ export default function AuditLogPage() {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: currentPage, limit: LIMIT });
-      if (currentFilters.entityType) params.set('entityType', currentFilters.entityType);
-      if (currentFilters.actorId) params.set('actorId', currentFilters.actorId);
-      if (currentFilters.from) params.set('from', currentFilters.from);
-      if (currentFilters.to) params.set('to', currentFilters.to);
-
-      const { data } = await apiClient.get(
-        `/workspaces/${workspaceId}/audit-log?${params}`
-      );
-
+      if (currentFilters.entityType) params.set("entityType", currentFilters.entityType);
+      if (currentFilters.actorId) params.set("actorId", currentFilters.actorId);
+      if (currentFilters.from) params.set("from", currentFilters.from);
+      if (currentFilters.to) params.set("to", currentFilters.to);
+      const { data } = await apiClient.get(`/workspaces/${workspaceId}/audit-log?${params}`);
       if (currentPage === 1) {
         setItems(data.data);
       } else {
@@ -102,17 +68,16 @@ export default function AuditLogPage() {
     setExportBusy(true);
     try {
       const params = new URLSearchParams();
-      if (filters.entityType) params.set('entityType', filters.entityType);
-      if (filters.actorId) params.set('actorId', filters.actorId);
-      if (filters.from) params.set('from', filters.from);
-      if (filters.to) params.set('to', filters.to);
-
+      if (filters.entityType) params.set("entityType", filters.entityType);
+      if (filters.actorId) params.set("actorId", filters.actorId);
+      if (filters.from) params.set("from", filters.from);
+      if (filters.to) params.set("to", filters.to);
       const response = await apiClient.get(
         `/workspaces/${workspaceId}/audit-log/export?${params}`,
-        { responseType: 'blob' }
+        { responseType: "blob" }
       );
-      const url = URL.createObjectURL(new Blob([response.data], { type: 'text/csv' }));
-      const a = document.createElement('a');
+      const url = URL.createObjectURL(new Blob([response.data], { type: "text/csv" }));
+      const a = document.createElement("a");
       a.href = url;
       a.download = `audit-log-${new Date().toISOString().slice(0, 10)}.csv`;
       a.click();
@@ -125,25 +90,35 @@ export default function AuditLogPage() {
   const hasMore = items.length < total;
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-xl font-semibold">Audit Log</h1>
-          <p className="text-sm text-[color:var(--muted)]">
-            {total.toLocaleString()} entries · admin only
-          </p>
-        </div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+
+      {/* ── Top bar: count + export ─────────────────────────────── */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <p style={{ fontSize: 12, color: "var(--muted)" }}>
+          {loading && items.length === 0
+            ? "Loading…"
+            : `${total.toLocaleString()} ${total === 1 ? "entry" : "entries"} · admin only`}
+        </p>
         <button
           onClick={handleExport}
           disabled={exportBusy}
-          className="flex items-center gap-2 rounded-xl border border-[color:var(--border)] px-4 py-2 text-sm font-medium hover:bg-[color:var(--border)]/30 disabled:opacity-50 transition"
+          style={{
+            display: "flex", alignItems: "center", gap: 6,
+            padding: "6px 14px", borderRadius: 9,
+            border: "1px solid var(--border)",
+            background: "var(--card)",
+            color: "var(--text)",
+            fontSize: 12, fontWeight: 600, cursor: "pointer",
+            opacity: exportBusy ? 0.6 : 1,
+            transition: "background 0.12s",
+          }}
+          className="hover:bg-[color:var(--border)]"
         >
-          {exportBusy ? 'Exporting…' : '⬇ Export CSV'}
+          ↓ Export CSV
         </button>
       </div>
 
-      {/* Filters */}
+      {/* ── Filters row ─────────────────────────────────────────── */}
       <AuditLogFilters
         filters={filters}
         members={members}
@@ -151,8 +126,13 @@ export default function AuditLogPage() {
         onReset={() => setFilters(EMPTY_FILTERS)}
       />
 
-      {/* Timeline */}
-      <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--background)] overflow-hidden shadow-sm">
+      {/* ── Log entries card ────────────────────────────────────── */}
+      <div style={{
+        background: "var(--card)",
+        border: "1px solid var(--border)",
+        borderRadius: 14,
+        overflow: "hidden",
+      }}>
         <AuditLogTimeline
           items={items}
           selectedId={selectedEntry?.id}
@@ -160,22 +140,68 @@ export default function AuditLogPage() {
           loading={loading && page === 1}
         />
 
+        {/* Load more */}
         {hasMore && !loading && (
-          <div className="border-t border-[color:var(--border)] px-4 py-3">
+          <div style={{ borderTop: "1px solid var(--border)", padding: "11px 18px" }}>
             <button
               onClick={handleLoadMore}
-              disabled={loading}
-              className="text-sm font-medium text-[color:var(--accent)] hover:opacity-80 transition"
+              style={{
+                fontSize: 12, fontWeight: 600,
+                color: "var(--accent, #7c5cfc)",
+                background: "none", border: "none",
+                cursor: "pointer", padding: 0,
+              }}
             >
               Load more ({total - items.length} remaining)
             </button>
           </div>
         )}
+
+        {/* Inline load more spinner */}
+        {loading && page > 1 && (
+          <div style={{ padding: "12px 18px", borderTop: "1px solid var(--border)" }}>
+            <p style={{ fontSize: 12, color: "var(--muted)" }}>Loading…</p>
+          </div>
+        )}
       </div>
 
-      {/* Diff panel */}
-      {selectedEntry && (
-        <DiffPanel entry={selectedEntry} onClose={() => setSelectedEntry(null)} />
+      {/* ── Diff detail panel ───────────────────────────────────── */}
+      {selectedEntry && selectedEntry.diff && Object.keys(selectedEntry.diff).length > 0 && (
+        <div style={{
+          background: "var(--card)",
+          border: "1px solid var(--border)",
+          borderRadius: 14,
+          padding: "16px 18px",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+            <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>
+              {selectedEntry.actor?.name ?? selectedEntry.actorId} · {selectedEntry.action}
+            </p>
+            <button
+              onClick={() => setSelectedEntry(null)}
+              style={{
+                fontSize: 11, color: "var(--muted)",
+                background: "none", border: "none", cursor: "pointer",
+              }}
+            >
+              ✕ close
+            </button>
+          </div>
+          <p style={{ fontSize: 11, color: "var(--muted)", marginBottom: 8 }}>
+            Entity: {selectedEntry.entityType}{" "}
+            <code style={{ padding: "1px 5px", borderRadius: 4, background: "var(--border)", fontSize: 10 }}>
+              {selectedEntry.entityId}
+            </code>
+          </p>
+          <pre style={{
+            maxHeight: 220, overflowY: "auto",
+            borderRadius: 10, background: "color-mix(in srgb, var(--muted) 8%, transparent)",
+            padding: "10px 14px", fontSize: 11, color: "var(--text)",
+            lineHeight: 1.6,
+          }}>
+            {JSON.stringify(selectedEntry.diff, null, 2)}
+          </pre>
+        </div>
       )}
     </div>
   );

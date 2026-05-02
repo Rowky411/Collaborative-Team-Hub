@@ -47,7 +47,7 @@ function isOverdue(iso) {
   return new Date(iso) < new Date();
 }
 
-export function ActionItemCard({ item, index, onClick }) {
+export function ActionItemCard({ item, index, onView, onEdit }) {
   const overdue = isOverdue(item.dueDate) && item.status !== "DONE";
 
   return (
@@ -57,22 +57,53 @@ export function ActionItemCard({ item, index, onClick }) {
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          onClick={() => onClick?.(item)}
+          onClick={() => onView?.(item)}
+          className="group relative"
           style={{
             background: "var(--card)",
-            border: `1px solid ${snapshot.isDragging ? "color-mix(in srgb, var(--accent) 40%, transparent)" : "var(--border)"}`,
             borderRadius: 12,
             padding: "12px 14px",
-            cursor: "pointer",
             userSelect: "none",
-            transform: snapshot.isDragging ? "rotate(1deg)" : "none",
-            boxShadow: snapshot.isDragging ? "0 8px 24px rgba(0,0,0,0.15)" : "none",
-            transition: "border-color 0.12s, box-shadow 0.12s",
+            cursor: snapshot.isDragging ? "grabbing" : "pointer",
+            // Only apply visual transitions when NOT dragging — avoids lag
+            ...(snapshot.isDragging
+              ? {
+                  border: "1px solid color-mix(in srgb, var(--accent) 50%, transparent)",
+                  boxShadow: "0 12px 32px rgba(0,0,0,0.2)",
+                  opacity: 0.96,
+                }
+              : {
+                  border: "1px solid var(--border)",
+                  boxShadow: "none",
+                  transition: "border-color 0.12s, box-shadow 0.12s",
+                }),
             ...provided.draggableProps.style,
           }}
-          className="hover:border-[color:var(--accent)]/30"
         >
-          <p style={{ fontSize: 13, fontWeight: 500, color: "var(--text)", lineHeight: 1.45, marginBottom: 6, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+          {/* Edit button — shown on hover */}
+          <button
+            onClick={(e) => { e.stopPropagation(); onEdit?.(item); }}
+            title="Edit"
+            className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity"
+            style={{
+              width: 22,
+              height: 22,
+              borderRadius: 6,
+              border: "1px solid var(--border)",
+              background: "var(--card)",
+              color: "var(--muted)",
+              cursor: "pointer",
+              fontSize: 11,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              lineHeight: 1,
+            }}
+          >
+            ✏
+          </button>
+
+          <p style={{ fontSize: 13, fontWeight: 500, color: "var(--text)", lineHeight: 1.45, marginBottom: 6, paddingRight: 24, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
             {item.title}
           </p>
 
@@ -96,6 +127,11 @@ export function ActionItemCard({ item, index, onClick }) {
                   }}
                 >
                   {overdue ? "⚠ " : ""}{formatDate(item.dueDate)}
+                </span>
+              )}
+              {item.attachments?.length > 0 && (
+                <span style={{ fontSize: 10, color: "var(--muted)" }} title={`${item.attachments.length} attachment${item.attachments.length !== 1 ? "s" : ""}`}>
+                  📎 {item.attachments.length}
                 </span>
               )}
               <Avatar user={item.assignee} />

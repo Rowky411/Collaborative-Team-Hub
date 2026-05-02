@@ -7,13 +7,15 @@ import { useWorkspaceStore } from "../../../../lib/stores/workspaceStore";
 import { usePresenceStore } from "../../../../lib/stores/presenceStore";
 import { useGoalStore } from "../../../../lib/stores/goalStore";
 import { useActionItemStore } from "../../../../lib/stores/actionItemStore";
+import { useAnnouncementStore } from "../../../../lib/stores/announcementStore";
+import { useNotificationStore } from "../../../../lib/stores/notificationStore";
 import { getSocket } from "../../../../lib/socket";
 import { WorkspaceSwitcher } from "../../../../components/workspace/WorkspaceSwitcher";
 
 const NAV = [
   { href: "", label: "Overview" },
   { href: "/goals", label: "Goals" },
-  { href: "/announcements", label: "Announcements", disabled: true },
+  { href: "/announcements", label: "Announcements" },
   { href: "/action-items", label: "Action items" },
   { href: "/settings", label: "Settings" },
 ];
@@ -43,6 +45,16 @@ export default function WorkspaceShellLayout({ children }) {
   const applyItemUpdated = useActionItemStore((s) => s.applyItemUpdated);
   const applyItemDeleted = useActionItemStore((s) => s.applyItemDeleted);
 
+  const applyAnnouncementCreated = useAnnouncementStore((s) => s.applyCreated);
+  const applyAnnouncementUpdated = useAnnouncementStore((s) => s.applyUpdated);
+  const applyAnnouncementPinned  = useAnnouncementStore((s) => s.applyUpdated);
+  const applyAnnouncementDeleted = useAnnouncementStore((s) => s.applyDeleted);
+  const applyReactionUpdated     = useAnnouncementStore((s) => s.applyReactionUpdated);
+  const applyCommentAdded        = useAnnouncementStore((s) => s.applyCommentAdded);
+
+  const fetchNotifications  = useNotificationStore((s) => s.fetch);
+  const addNotification     = useNotificationStore((s) => s.addNotification);
+
   const setOnline = usePresenceStore((s) => s.setOnline);
   const setOffline = usePresenceStore((s) => s.setOffline);
   const setSnapshot = usePresenceStore((s) => s.setSnapshot);
@@ -50,7 +62,8 @@ export default function WorkspaceShellLayout({ children }) {
 
   useEffect(() => {
     fetchWorkspaces();
-  }, [fetchWorkspaces]);
+    fetchNotifications();
+  }, [fetchWorkspaces, fetchNotifications]);
 
   useEffect(() => {
     if (!workspaceId) return;
@@ -91,6 +104,14 @@ export default function WorkspaceShellLayout({ children }) {
     const onItemUpdated = ({ actionItem }) => applyItemUpdated(actionItem);
     const onItemDeleted = ({ id }) => applyItemDeleted(id);
 
+    const onAnnouncementCreated = ({ announcement }) => applyAnnouncementCreated(announcement);
+    const onAnnouncementUpdated = ({ announcement }) => applyAnnouncementUpdated(announcement);
+    const onAnnouncementPinned  = ({ announcement }) => applyAnnouncementPinned(announcement);
+    const onAnnouncementDeleted = ({ id }) => applyAnnouncementDeleted(id);
+    const onReactionUpdated = (data) => applyReactionUpdated(data);
+    const onCommentAdded = ({ comment }) => applyCommentAdded(comment);
+    const onNotificationNew = ({ notification }) => addNotification(notification);
+
     socket.on("workspace:member_added", onMemberAdded);
     socket.on("workspace:member_removed", onMemberRemoved);
     socket.on("workspace:updated", onWorkspaceUpdated);
@@ -105,6 +126,13 @@ export default function WorkspaceShellLayout({ children }) {
     socket.on("actionItem:statusChanged", onStatusChanged);
     socket.on("actionItem:updated", onItemUpdated);
     socket.on("actionItem:deleted", onItemDeleted);
+    socket.on("announcement:created", onAnnouncementCreated);
+    socket.on("announcement:updated", onAnnouncementUpdated);
+    socket.on("announcement:pinned",  onAnnouncementPinned);
+    socket.on("announcement:deleted", onAnnouncementDeleted);
+    socket.on("announcement:reactionUpdated", onReactionUpdated);
+    socket.on("announcement:commentAdded", onCommentAdded);
+    socket.on("notification:new", onNotificationNew);
 
     const join = () => socket.emit("workspace:join", workspaceId);
     if (socket.connected) join();
@@ -126,6 +154,13 @@ export default function WorkspaceShellLayout({ children }) {
       socket.off("actionItem:statusChanged", onStatusChanged);
       socket.off("actionItem:updated", onItemUpdated);
       socket.off("actionItem:deleted", onItemDeleted);
+      socket.off("announcement:created", onAnnouncementCreated);
+      socket.off("announcement:updated", onAnnouncementUpdated);
+      socket.off("announcement:pinned",  onAnnouncementPinned);
+      socket.off("announcement:deleted", onAnnouncementDeleted);
+      socket.off("announcement:reactionUpdated", onReactionUpdated);
+      socket.off("announcement:commentAdded", onCommentAdded);
+      socket.off("notification:new", onNotificationNew);
       socket.off("connect", join);
     };
   }, [
@@ -144,6 +179,14 @@ export default function WorkspaceShellLayout({ children }) {
     applyStatusChanged,
     applyItemUpdated,
     applyItemDeleted,
+    applyAnnouncementCreated,
+    applyAnnouncementUpdated,
+    applyAnnouncementPinned,
+    applyAnnouncementDeleted,
+    applyReactionUpdated,
+    applyCommentAdded,
+    addNotification,
+    fetchNotifications,
   ]);
 
   if (loading && !workspace) {

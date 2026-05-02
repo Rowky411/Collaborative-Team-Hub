@@ -5,12 +5,13 @@ import { useEffect } from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useWorkspaceStore } from "../../../../lib/stores/workspaceStore";
 import { usePresenceStore } from "../../../../lib/stores/presenceStore";
+import { useGoalStore } from "../../../../lib/stores/goalStore";
 import { getSocket } from "../../../../lib/socket";
 import { WorkspaceSwitcher } from "../../../../components/workspace/WorkspaceSwitcher";
 
 const NAV = [
   { href: "", label: "Overview" },
-  { href: "/goals", label: "Goals", disabled: true },
+  { href: "/goals", label: "Goals" },
   { href: "/announcements", label: "Announcements", disabled: true },
   { href: "/action-items", label: "Action items", disabled: true },
   { href: "/settings", label: "Settings" },
@@ -30,6 +31,11 @@ export default function WorkspaceShellLayout({ children }) {
   const applyMemberAdded = useWorkspaceStore((s) => s.applyMemberAdded);
   const applyMemberRemoved = useWorkspaceStore((s) => s.applyMemberRemoved);
   const applyWorkspaceUpdated = useWorkspaceStore((s) => s.applyWorkspaceUpdated);
+
+  const applyGoalCreated = useGoalStore((s) => s.applyGoalCreated);
+  const applyGoalUpdated = useGoalStore((s) => s.applyGoalUpdated);
+  const applyGoalDeleted = useGoalStore((s) => s.applyGoalDeleted);
+  const applyUpdatePosted = useGoalStore((s) => s.applyUpdatePosted);
 
   const setOnline = usePresenceStore((s) => s.setOnline);
   const setOffline = usePresenceStore((s) => s.setOffline);
@@ -69,12 +75,21 @@ export default function WorkspaceShellLayout({ children }) {
       if (wid === workspaceId) setSnapshot(onlineUserIds);
     };
 
+    const onGoalCreated = ({ goal }) => applyGoalCreated(goal);
+    const onGoalUpdated = ({ goal }) => applyGoalUpdated(goal);
+    const onGoalDeleted = ({ goalId }) => applyGoalDeleted(goalId);
+    const onUpdatePosted = ({ update }) => applyUpdatePosted(update);
+
     socket.on("workspace:member_added", onMemberAdded);
     socket.on("workspace:member_removed", onMemberRemoved);
     socket.on("workspace:updated", onWorkspaceUpdated);
     socket.on("presence:online", onPresenceOnline);
     socket.on("presence:offline", onPresenceOffline);
     socket.on("presence:snapshot", onPresenceSnapshot);
+    socket.on("goal:created", onGoalCreated);
+    socket.on("goal:updated", onGoalUpdated);
+    socket.on("goal:deleted", onGoalDeleted);
+    socket.on("goal:update_posted", onUpdatePosted);
 
     const join = () => socket.emit("workspace:join", workspaceId);
     if (socket.connected) join();
@@ -88,6 +103,10 @@ export default function WorkspaceShellLayout({ children }) {
       socket.off("presence:online", onPresenceOnline);
       socket.off("presence:offline", onPresenceOffline);
       socket.off("presence:snapshot", onPresenceSnapshot);
+      socket.off("goal:created", onGoalCreated);
+      socket.off("goal:updated", onGoalUpdated);
+      socket.off("goal:deleted", onGoalDeleted);
+      socket.off("goal:update_posted", onUpdatePosted);
       socket.off("connect", join);
     };
   }, [
@@ -98,6 +117,10 @@ export default function WorkspaceShellLayout({ children }) {
     setOnline,
     setOffline,
     setSnapshot,
+    applyGoalCreated,
+    applyGoalUpdated,
+    applyGoalDeleted,
+    applyUpdatePosted,
   ]);
 
   if (loading && !workspace) {

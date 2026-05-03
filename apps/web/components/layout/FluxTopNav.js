@@ -134,7 +134,7 @@ export function FluxTopNav() {
           className="relative cursor-pointer"
           style={{ background: "none", border: 0, padding: 0 }}
         >
-          <Avatar name={user?.name || "?"} size={30} />
+          <Avatar name={user?.name || "?"} size={30} src={user?.avatarUrl || undefined} />
           <span
             style={{
               position: "absolute",

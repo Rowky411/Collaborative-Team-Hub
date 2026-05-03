@@ -58,7 +58,8 @@ export default function ProfilePage() {
   if (!user) return null;
 
   return (
-    <div className="max-w-xl">
+    <div className="flex justify-center px-4 py-10">
+    <div className="w-full max-w-lg">
       <h1 className="text-2xl font-semibold">Profile</h1>
       <p className="mt-1 text-sm text-[color:var(--muted)]">
         Update your name and avatar
@@ -133,6 +134,7 @@ export default function ProfilePage() {
           ) : null}
         </div>
       </form>
+    </div>
     </div>
   );
 }

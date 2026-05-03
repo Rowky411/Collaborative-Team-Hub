@@ -14,7 +14,7 @@ export function RichTextEditor({ content, onChange, editable = true, placeholder
       StarterKit,
       Placeholder.configure({ placeholder }),
     ],
-    content: content ? (typeof content === "string" ? JSON.parse(content) : content) : undefined,
+    content: content ? (typeof content === "string" ? (() => { try { return JSON.parse(content); } catch { return { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: content }] }] }; } })() : content) : undefined,
     editable,
     onUpdate({ editor }) {
       onChange?.(JSON.stringify(editor.getJSON()));

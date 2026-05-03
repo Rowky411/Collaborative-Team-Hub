@@ -25,7 +25,7 @@ export function pickColor(name = "?") {
   return PALETTE[code % PALETTE.length];
 }
 
-export function Avatar({ name = "?", size = 30, color, style = {}, className = "" }) {
+export function Avatar({ name = "?", size = 30, color, src, style = {}, className = "" }) {
   const initials = name
     .split(" ")
     .map((w) => w[0])
@@ -33,6 +33,24 @@ export function Avatar({ name = "?", size = 30, color, style = {}, className = "
     .slice(0, 2)
     .toUpperCase();
   const bg = color || pickColor(name);
+  if (src) {
+    return (
+      <div
+        className={className}
+        style={{
+          width: size,
+          height: size,
+          borderRadius: "50%",
+          overflow: "hidden",
+          flexShrink: 0,
+          ...style,
+        }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+      </div>
+    );
+  }
   return (
     <div
       className={className}

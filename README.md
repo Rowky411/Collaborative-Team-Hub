@@ -7,6 +7,7 @@ A full-stack monorepo app for team collaboration — workspaces, goals, kanban b
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Features](#features)
+- [Advanced Features](#advanced-features)
 - [Prerequisites](#prerequisites)
 - [Local Setup](#local-setup)
 - [Environment Variables](#environment-variables)
@@ -73,6 +74,22 @@ Collaborative-Team-Hub/
 - **Offline Mode** — Queued operations sync automatically on reconnect.
 - **Real-time** — All mutations broadcast to workspace members via Socket.io.
 - **File Uploads** — Profile avatars and action item attachments stored in Cloudinary.
+
+---
+
+## Advanced Features
+
+Two advanced features were chosen from the optional list:
+
+### 5. Audit Log
+Every workspace mutation (goal created/updated, member invited, announcement posted, action item moved, etc.) is recorded as an immutable `AuditLog` entry in the database. The timeline UI (`/workspaces/:id/audit-log`) displays entries in reverse-chronological order with actor name, action type, and affected resource. The list is filterable by action type and supports **CSV export** of the full log.
+
+### 2. Optimistic UI
+All user-initiated mutations reflect instantly in the UI before the server responds. Each Zustand store applies the change locally first, captures a rollback snapshot, and reverts to the snapshot if the API call fails. Covered operations include:
+- Kanban card drag-and-drop (status / position reorder)
+- Goal status and priority toggles
+- Announcement emoji reactions (add / remove)
+- Action item field edits (title, assignee, due date)
 
 ---
 

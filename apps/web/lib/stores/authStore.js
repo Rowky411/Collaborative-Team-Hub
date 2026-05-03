@@ -5,6 +5,7 @@ import { apiClient } from "../apiClient";
 
 export const useAuthStore = create((set, get) => ({
   user: null,
+  accessToken: null,
   status: "idle", // 'idle' | 'loading' | 'authenticated' | 'unauthenticated'
   error: null,
 
@@ -23,7 +24,7 @@ export const useAuthStore = create((set, get) => ({
     set({ status: "loading", error: null });
     try {
       const { data } = await apiClient.post("/auth/login", { email, password });
-      set({ user: data.data.user, status: "authenticated" });
+      set({ user: data.data.user, accessToken: data.data.accessToken, status: "authenticated" });
       return { ok: true };
     } catch (err) {
       const message = err?.response?.data?.error?.message || "Login failed";
@@ -36,7 +37,7 @@ export const useAuthStore = create((set, get) => ({
     set({ status: "loading", error: null });
     try {
       const { data } = await apiClient.post("/auth/register", { email, name, password });
-      set({ user: data.data.user, status: "authenticated" });
+      set({ user: data.data.user, accessToken: data.data.accessToken, status: "authenticated" });
       return { ok: true };
     } catch (err) {
       const message = err?.response?.data?.error?.message || "Registration failed";

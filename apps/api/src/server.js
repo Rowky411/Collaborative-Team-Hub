@@ -39,7 +39,7 @@ io.use((socket, next) => {
   try {
     const raw = socket.handshake.headers.cookie || '';
     const cookies = parseCookie(raw);
-    const token = cookies.access_token;
+    const token = socket.handshake.auth?.token || cookies.access_token;
     if (!token) return next(new Error('UNAUTHORIZED'));
     const payload = verifyAccessToken(token);
     socket.data.userId = payload.sub;

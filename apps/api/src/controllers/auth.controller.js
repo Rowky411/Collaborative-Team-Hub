@@ -32,7 +32,7 @@ export async function register(req, res) {
   const { token: refresh } = await issueRefreshToken(user.id);
   setAuthCookies(res, { accessToken: access, refreshToken: refresh });
 
-  res.status(201).json({ data: { user: safeUser(user) } });
+  res.status(201).json({ data: { user: safeUser(user), accessToken: access } });
 }
 
 export async function login(req, res) {
@@ -47,7 +47,7 @@ export async function login(req, res) {
   const { token: refresh } = await issueRefreshToken(user.id);
   setAuthCookies(res, { accessToken: access, refreshToken: refresh });
 
-  res.json({ data: { user: safeUser(user) } });
+  res.json({ data: { user: safeUser(user), accessToken: access } });
 }
 
 export async function refresh(req, res) {
@@ -69,7 +69,7 @@ export async function refresh(req, res) {
   const access = signAccessToken(user);
   setAuthCookies(res, { accessToken: access, refreshToken: rotated.token });
 
-  res.json({ data: { user: safeUser(user) } });
+  res.json({ data: { user: safeUser(user), accessToken: access } });
 }
 
 export async function logout(req, res) {

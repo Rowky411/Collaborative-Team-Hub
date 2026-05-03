@@ -2,6 +2,8 @@
 
 A full-stack monorepo app for team collaboration — workspaces, goals, kanban boards, announcements, analytics, and real-time updates.
 
+**Live demo:** https://determined-hope-production-9d55.up.railway.app
+
 ## Table of Contents
 
 - [Tech Stack](#tech-stack)
